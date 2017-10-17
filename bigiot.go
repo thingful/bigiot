@@ -1,5 +1,10 @@
 package bigiot
 
+const (
+	// DefaultMarketplaceURI is the URI to the default BIG IoT marketplace
+	DefaultMarketplaceURI = "https://market.big-iot.org"
+)
+
 // Provider is our struct for containing auth credentials to interact with the
 // BIGIoT marketplace.
 type Provider struct {
@@ -16,8 +21,9 @@ type Provider struct {
 // configuration.
 func NewProvider(id, secret string, options ...func(*Provider)) *Provider {
 	provider := &Provider{
-		ID:     id,
-		Secret: secret,
+		ID:             id,
+		Secret:         secret,
+		MarketplaceURI: DefaultMarketplaceURI,
 	}
 
 	for _, opt := range options {
