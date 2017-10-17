@@ -13,9 +13,9 @@ Go implementation of the BIG IoT library/SDK
 ## Example Provider
 
 ```go
-// create provider, and authenticate with marketplace
-provider := bigiot.NewProvider(providerID, marketplaceURI)
-err := provider.Authenticate(providerSecret)
+// create provider and authenticate with marketplace
+provider := bigiot.NewProvider(providerID, providerSecret)
+err := provider.Authenticate()
 if err != nil {
     panic(err)
 }
@@ -70,4 +70,14 @@ err = offering.Deregister()
 if err != nil {
     panic(err)
 }
+```
+
+## Example Provider with custom marketplace
+
+```go
+provider := bigiot.NewProvider(
+    "id", 
+    "secret",
+    bigiot.WithMarketplace("https://market-dev.big-iot.org"),
+)
 ```
