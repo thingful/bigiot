@@ -39,7 +39,7 @@ offeringDescription := &bigiot.OfferingDescription{
             Name: "latitude",
             RDFType: RDFType("schema:latitude"),
             ValueType: bigiot.Number,
-        }, 
+        },
         {
             Name: "radius",
             RDFType: RDFType("schema:geoRadius"),
@@ -76,7 +76,7 @@ if err != nil {
 
 ```go
 provider := bigiot.NewProvider(
-    "id", 
+    "id",
     "secret",
     bigiot.WithMarketplace("https://market-dev.big-iot.org"),
 )
