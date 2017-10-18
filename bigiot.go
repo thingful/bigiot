@@ -1,10 +1,13 @@
 package bigiot
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/shurcooL/graphql"
 )
 
 const (
@@ -16,14 +19,23 @@ const (
 	DefaultTimeout = 10
 )
 
-// Provider is our struct for containing auth credentials to interact with the
-// BIGIoT marketplace.
-type Provider struct {
+// Config captures the runtime state of the BIGIoT client. We've separated the
+// config from the Provider type so that we can pass this config into our
+// authenticating http Transport without all the other references.
+type Config struct {
 	ID          string
 	Secret      string
 	AccessToken string
-	BaseURL     *url.URL
-	httpClient  *http.Client
+	UserAgent   string
+}
+
+// Provider is our struct for containing auth credentials to interact with the
+// BIGIoT marketplace.
+type Provider struct {
+	*Config
+	BaseURL       *url.URL
+	httpClient    *http.Client
+	graphqlClient *graphql.Client
 }
 
 // NewProvider instantiates and returns a configured Provider instance. The
@@ -36,13 +48,18 @@ func NewProvider(id, secret string, options ...func(*Provider) error) (*Provider
 	// this is a known good URL, so we can ignore the error here
 	u, _ := url.Parse(DefaultMarketplaceURL)
 
+	// set up a default http client, that enforces our default timeout. Users will
+	// have to explicitly override if they want a non-timing out client.
 	httpClient := &http.Client{
 		Timeout: time.Second * DefaultTimeout,
 	}
 
 	provider := &Provider{
-		ID:         id,
-		Secret:     secret,
+		Config: &Config{
+			ID:        id,
+			Secret:    secret,
+			UserAgent: fmt.Sprintf("bigiot/%s (https://github.com/thingful/bigiot)", Version),
+		},
 		BaseURL:    u,
 		httpClient: httpClient,
 	}
@@ -64,11 +81,17 @@ func NewProvider(id, secret string, options ...func(*Provider) error) (*Provider
 	}
 
 	provider.httpClient.Transport = &authTransport{
-		proxied:     transport,
-		accessToken: "",
+		proxied: transport,
+		Config:  provider.Config,
 	}
 
-	//provider.httpClient.Transport.(roundTripper).accessToken = "foo"
+	// setup our graphql client pointing at the specified marketplace, and using
+	// our auth enabled http client
+	graphqlURL := *provider.BaseURL
+	graphqlURL.Path = "/graphql"
+
+	provider.graphqlClient = graphql.NewClient(graphqlURL.String(), provider.httpClient, nil)
+
 	return provider, nil
 }
 
@@ -110,6 +133,10 @@ func (p *Provider) Authenticate() (err error) {
 	return nil
 }
 
+func (p *Provider) RegisterOffering(offeringDescription *OfferingDescription) (*Offering, error) {
+	return nil, nil
+}
+
 // WithMarketplace is a functional configuration option allowing us to
 // optionally set a custom marketplace URI when constructing a Provider
 // instance.
@@ -121,6 +148,26 @@ func WithMarketplace(marketplaceURI string) func(*Provider) error {
 		}
 
 		p.BaseURL = u
+
+		return nil
+	}
+}
+
+// WithUserAgent allows the caller to specify the user agent that should be sent
+// to the marketplace.
+func WithUserAgent(userAgent string) func(*Provider) error {
+	return func(p *Provider) error {
+		p.UserAgent = userAgent
+
+		return nil
+	}
+}
+
+// WithHTTPClient allows a caller to pass in a custom http Client allowing them
+// to customize the behaviour of our HTTP interactions.
+func WithHTTPClient(client *http.Client) func(*Provider) error {
+	return func(p *Provider) error {
+		p.httpClient = client
 
 		return nil
 	}

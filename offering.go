@@ -2,6 +2,10 @@ package bigiot
 
 type RdfType string
 
+func (r RdfType) String() string {
+	return string(r)
+}
+
 type EndpointType int
 
 const (
@@ -16,15 +20,24 @@ type Endpoint struct {
 }
 
 type DataField struct {
-	Name   string
-	RdfURI string
+	Name    string
+	RdfType RdfType
+}
+
+type Extent struct {
+	City string
 }
 
 type OfferingDescription struct {
-	ID         string
 	Name       string
 	RdfType    RdfType
 	Endpoints  []Endpoint
 	InputData  []DataField
 	OutputData []DataField
+	Extent     Extent
+}
+
+type Offering struct {
+	ID string
+	OfferingDescription
 }
