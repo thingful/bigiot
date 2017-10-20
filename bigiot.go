@@ -1,6 +1,7 @@
 package bigiot
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -103,10 +104,19 @@ func (p *Provider) Authenticate() (err error) {
 	authURL := *p.BaseURL
 	authURL.Path = "/accessToken"
 
+	params := &url.Values{
+		"clientId":     []string{p.ID},
+		"clientSecret": []string{p.Secret},
+	}
+
+	authURL.RawQuery = params.Encode()
+
 	req, err := http.NewRequest(http.MethodGet, authURL.String(), nil)
 	if err != nil {
 		return err
 	}
+
+	req.Header.Set(acceptKey, textPlain)
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
@@ -131,6 +141,31 @@ func (p *Provider) Authenticate() (err error) {
 	p.AccessToken = string(body)
 
 	return nil
+}
+
+func (p *Provider) Offering(id string) (*Offering, error) {
+	var q struct {
+		Offering struct {
+			ID   graphql.String
+			Name graphql.String
+		} `graphql:"offering(id: $id)"`
+	}
+
+	variables := map[string]interface{}{
+		"id": graphql.String(id),
+	}
+
+	err := p.graphqlClient.Query(context.Background(), &q, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Offering{
+		ID: string(q.Offering.ID),
+		OfferingDescription: OfferingDescription{
+			Name: string(q.Offering.Name),
+		},
+	}, nil
 }
 
 func (p *Provider) RegisterOffering(offeringDescription *OfferingDescription) (*Offering, error) {

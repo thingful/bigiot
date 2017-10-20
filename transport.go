@@ -8,6 +8,10 @@ const (
 	userAgentKey = "User-Agent"
 
 	authorizationKey = "Authorization"
+
+	acceptKey = "Accept"
+
+	textPlain = "text/plain"
 )
 
 // authTransport is an internal implementation of the RoundTripper interface that

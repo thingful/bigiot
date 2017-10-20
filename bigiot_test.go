@@ -45,11 +45,12 @@ func TestAuthenticate(t *testing.T) {
 	httpmock.RegisterStubRequest(
 		httpmock.NewStubRequest(
 			http.MethodGet,
-			"https://market.big-iot.org/accessToken",
+			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
 			httpmock.NewStringResponder(200, "1234abcd"),
 		).WithHeader(
 			&http.Header{
 				"User-Agent": []string{"bigiot/" + bigiot.Version + " (https://github.com/thingful/bigiot)"},
+				"Accept":     []string{"text/plain"},
 			},
 		),
 	)
@@ -69,11 +70,12 @@ func TestAuthenticateCustomUserAgent(t *testing.T) {
 	httpmock.RegisterStubRequest(
 		httpmock.NewStubRequest(
 			http.MethodGet,
-			"https://market.big-iot.org/accessToken",
+			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
 			httpmock.NewStringResponder(200, "1234abcd"),
 		).WithHeader(
 			&http.Header{
 				"User-Agent": []string{"foo"},
+				"Accept":     []string{"text/plain"},
 			},
 		),
 	)
@@ -105,8 +107,12 @@ func TestAuthenticateCustomTransport(t *testing.T) {
 	httpmock.RegisterStubRequest(
 		httpmock.NewStubRequest(
 			http.MethodGet,
-			"https://market.big-iot.org/accessToken",
+			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
 			httpmock.NewStringResponder(200, "1234abcd"),
+		).WithHeader(
+			&http.Header{
+				"Accept": []string{"text/plain"},
+			},
 		),
 	)
 
@@ -169,4 +175,53 @@ func TestRegisterOffering(t *testing.T) {
 	_, err = provider.RegisterOffering(offeringDescription)
 	assert.Nil(t, err)
 	//assert.NotNil(t, offering)
+}
+
+func TestOffering(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	httpmock.RegisterStubRequest(
+		httpmock.NewStubRequest(
+			http.MethodGet,
+			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
+			httpmock.NewStringResponder(200, "1234abcd"),
+		).WithHeader(
+			&http.Header{
+				"Accept": []string{"text/plain"},
+			},
+		),
+	)
+
+	httpmock.RegisterStubRequest(
+		httpmock.NewStubRequest(
+			http.MethodPost,
+			"https://market.big-iot.org/graphql",
+			httpmock.NewStringResponder(200, `{
+				"data": {
+					"offering": {
+						"id": "offeringID",
+						"name": "offering name"
+					}
+				}
+			}`),
+		).WithHeader(
+			&http.Header{
+				"Authorization": []string{"Bearer 1234abcd"},
+			},
+		//).WithBody(
+		//	bytes.NewBufferString(`{"query":"query offering { offering(id: "offeringId") { id name } }`),
+		),
+	)
+
+	provider, err := bigiot.NewProvider("id", "secret")
+	assert.Nil(t, err)
+
+	err = provider.Authenticate()
+	assert.Nil(t, err)
+
+	offering, err := provider.Offering("offeringID")
+	assert.Nil(t, err)
+	assert.NotNil(t, offering)
+	//assert.Equal(t, "providerId", offering.ID)
 }
