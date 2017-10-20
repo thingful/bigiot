@@ -15,9 +15,8 @@
 package bigiot
 
 const (
-	// Version string - currently manually updated by make task. We use this
-	// string in the user agent header we set by default in the client. Users of
-	// the library may overwrite the default user agent string when instantiating
-	// the library.
+	// Version string for the library. By default this is added to the user-agent
+	// string sent by the client, but users of the library can override the user
+	// agent string when instantiating the client.
 	Version = "c62c33c"
 )
