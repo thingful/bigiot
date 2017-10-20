@@ -10,7 +10,7 @@ Go implementation of the BIG IoT library/SDK
 * Discovering an offering in the marketplace
 * Subscribing to an offering
 
-## Example Provider
+## Create Offering
 
 ```go
 // create provider and authenticate with marketplace
@@ -72,7 +72,7 @@ if err != nil {
 }
 ```
 
-## Example Provider with custom marketplace
+## Create provider client with custom marketplace
 
 ```go
 provider := bigiot.NewProvider(
@@ -80,4 +80,23 @@ provider := bigiot.NewProvider(
     "secret",
     bigiot.WithMarketplace("https://market-dev.big-iot.org"),
 )
+```
+
+## List offerings
+
+```go
+provider := bigiot.NewProvider("id", "secret")
+err := provider.Authenticate()
+if err != nil {
+    panic(err)
+}
+
+offerings, err := provider.Offerings()
+if err != nil {
+    panic(err)
+}
+
+for _, offering := range offerings {
+    fmt.Println(offering.Name)
+}
 ```
