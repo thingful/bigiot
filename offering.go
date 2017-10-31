@@ -14,44 +14,42 @@
 
 package bigiot
 
-type RdfType string
-
-func (r RdfType) String() string {
-	return string(r)
-}
-
-type EndpointType int
-
-const (
-	HTTPGet EndpointType = iota
-	HTTPPost
-	WebSocket
-)
-
-type Endpoint struct {
-	URI          string
-	EndpointType EndpointType
-}
-
-type DataField struct {
-	Name    string
-	RdfType RdfType
-}
-
-type Extent struct {
-	City string
-}
-
-type OfferingDescription struct {
-	Name       string
-	RdfType    RdfType
-	Endpoints  []Endpoint
-	InputData  []DataField
-	OutputData []DataField
-	Extent     Extent
-}
-
-type Offering struct {
-	ID string
-	OfferingDescription
-}
+//// RdfType is currently a simple type alias for string, but may be extended to
+//// provide richer functionality as this functionality is made available from the
+//// BIGIoT marketplace.
+//type RdfType string
+//
+//// String is an implementation of the stringer interface to return a string
+//// representation of an RdfType instance.
+//func (r RdfType) String() string {
+//	return string(r)
+//}
+//
+//type Endpoint struct {
+//	URI          string
+//	EndpointType EndpointType
+//}
+//
+//type DataField struct {
+//	Name    string
+//	RdfType RdfType
+//}
+//
+//type Extent struct {
+//	City string
+//}
+//
+//// Offering is a struct used to capture the data used to describe an
+//// offering. This struct is used when registering an offering in the
+//// marketplace, and is the basis of the type returned when retrieving details on
+//// an offering back from the marketplace.
+//type Offering struct {
+//	ID         string
+//	LocalID    string
+//	Name       string
+//	RdfType    RdfType
+//	Endpoints  []Endpoint
+//	InputData  []DataField
+//	OutputData []DataField
+//	Extent     Extent
+//}
