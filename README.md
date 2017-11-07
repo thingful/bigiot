@@ -14,53 +14,59 @@ Go implementation of the BIG IoT library/SDK
 
 ```go
 // create provider and authenticate with marketplace
-provider := bigiot.NewProvider(providerID, providerSecret)
+provider, err := bigiot.NewProvider(providerID, providerSecret)
+if err != nil {
+    panic(err)
+}
+
 err := provider.Authenticate()
 if err != nil {
     panic(err)
 }
 
 // create the description of the offering
-offeringDescription := &bigiot.OfferingDescription{
+offeringInput := &bigiot.OfferingInput{
+    LocalID: "ParkingOffering",
     Name: "Demo Parking Offering",
-    RDFType: RDFType("bigiot:Parking"),
     Endpoints: []bigiot.Endpoint{
         {
-            URI: "http://example.com/parking",
-        }
+            URI:                 "http://example.com/parking",
+            EndpointType:        bigiot.HTTPGet,
+            AccessInterfaceType: bigiot.External,
+        },
     },
-    InputData: []bigiot.InputData{
+    InputData: []bigiot.DataField{
         {
             Name: "longitude",
-            RDFType: RDFType("schema:longitude"),
-            ValueType: bigiot.Number,
+            RdfURI: "schema:longitude",
         },
         {
             Name: "latitude",
-            RDFType: RDFType("schema:latitude"),
-            ValueType: bigiot.Number,
+            RdfURI: "schema:latitude",
         },
         {
             Name: "radius",
-            RDFType: RDFType("schema:geoRadius"),
-            ValueType: bigiot.Number,
+            RdfURI: "schema:geoRadius",
         },
     },
     OutputData: []bigiot.Data{
         {
             Name: "geoCoordinates",
-            RDFType: RDFType("schema:geoCoordinates"),
-            ValueType: bigiot.Number,
+            RdfURI: "schema:geoCoordinates",
         }
     },
-    Region: &bigiot.Region{
+    Extent: bigiot.Address{
         City: "Barcelona",
+    },
+    Activation: bigiot.Activation{
+        Status: true,
+        ExpirationTime: expirationTime,
     }
 }
 
 // register the offering - note this registration is timeboxed so should be
 // refreshed regularly
-offering, err = provider.RegisterOffering(offeringDescription)
+offering, err = provider.RegisterOffering(ctx, offeringInput)
 if err != nil {
     panic(err)
 }
