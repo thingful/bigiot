@@ -5,15 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smulube/httpmock"
 	"github.com/stretchr/testify/assert"
+	"github.com/thingful/simular"
 )
 
 func TestNewProvider(t *testing.T) {
 	p, err := NewProvider("id", "secret")
 	assert.Nil(t, err)
-	assert.Equal(t, "id", p.id)
-	assert.Equal(t, "secret", p.secret)
+	assert.Equal(t, "id", p.ID)
+	assert.Equal(t, "secret", p.Secret)
 	assert.Equal(t, DefaultMarketplaceURL, p.baseURL.String())
 }
 
@@ -37,19 +37,20 @@ func TestProviderConstructorInvalidMarketplace(t *testing.T) {
 }
 
 func TestAuthenticate(t *testing.T) {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+	simular.Activate()
+	defer simular.DeactivateAndReset()
 
-	httpmock.RegisterStubRequest(
-		httpmock.NewStubRequest(
+	simular.RegisterStubRequests(
+		simular.NewStubRequest(
 			http.MethodGet,
 			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-			httpmock.NewStringResponder(200, "1234abcd"),
-		).WithHeader(
-			&http.Header{
-				"User-Agent": []string{"bigiot/" + Version + " (https://github.com/thingful/bigiot)"},
-				"Accept":     []string{"text/plain"},
-			},
+			simular.NewStringResponder(200, "1234abcd"),
+			simular.WithHeader(
+				&http.Header{
+					"User-Agent": []string{"bigiot/" + Version + " (https://github.com/thingful/bigiot)"},
+					"Accept":     []string{"text/plain"},
+				},
+			),
 		),
 	)
 
@@ -58,18 +59,18 @@ func TestAuthenticate(t *testing.T) {
 	assert.Equal(t, "1234abcd", p.accessToken)
 	assert.Equal(t, DefaultMarketplaceURL, p.baseURL.String())
 
-	assert.Nil(t, httpmock.AllStubsCalled())
+	assert.Nil(t, simular.AllStubsCalled())
 }
 
 func TestAuthenticateUnexpectedResponse(t *testing.T) {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+	simular.Activate()
+	defer simular.DeactivateAndReset()
 
-	httpmock.RegisterStubRequest(
-		httpmock.NewStubRequest(
+	simular.RegisterStubRequests(
+		simular.NewStubRequest(
 			http.MethodGet,
 			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-			httpmock.NewStringResponder(403, "Forbidden"),
+			simular.NewStringResponder(403, "Forbidden"),
 		),
 	)
 
@@ -80,19 +81,20 @@ func TestAuthenticateUnexpectedResponse(t *testing.T) {
 }
 
 func TestAuthenticateCustomUserAgent(t *testing.T) {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+	simular.Activate()
+	defer simular.DeactivateAndReset()
 
-	httpmock.RegisterStubRequest(
-		httpmock.NewStubRequest(
+	simular.RegisterStubRequests(
+		simular.NewStubRequest(
 			http.MethodGet,
 			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-			httpmock.NewStringResponder(200, "1234abcd"),
-		).WithHeader(
-			&http.Header{
-				"User-Agent": []string{"foo"},
-				"Accept":     []string{"text/plain"},
-			},
+			simular.NewStringResponder(200, "1234abcd"),
+			simular.WithHeader(
+				&http.Header{
+					"User-Agent": []string{"foo"},
+					"Accept":     []string{"text/plain"},
+				},
+			),
 		),
 	)
 
@@ -105,7 +107,7 @@ func TestAuthenticateCustomUserAgent(t *testing.T) {
 	assert.Equal(t, "1234abcd", p.accessToken)
 	assert.Equal(t, DefaultMarketplaceURL, p.baseURL.String())
 
-	assert.Nil(t, httpmock.AllStubsCalled())
+	assert.Nil(t, simular.AllStubsCalled())
 }
 
 type testTripper struct {
@@ -117,18 +119,19 @@ func (t testTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 func TestAuthenticateCustomTransport(t *testing.T) {
-	httpmock.Activate()
-	defer httpmock.DeactivateAndReset()
+	simular.Activate()
+	defer simular.DeactivateAndReset()
 
-	httpmock.RegisterStubRequest(
-		httpmock.NewStubRequest(
+	simular.RegisterStubRequests(
+		simular.NewStubRequest(
 			http.MethodGet,
 			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-			httpmock.NewStringResponder(200, "1234abcd"),
-		).WithHeader(
-			&http.Header{
-				"Accept": []string{"text/plain"},
-			},
+			simular.NewStringResponder(200, "1234abcd"),
+			simular.WithHeader(
+				&http.Header{
+					"Accept": []string{"text/plain"},
+				},
+			),
 		),
 	)
 
@@ -146,97 +149,5 @@ func TestAuthenticateCustomTransport(t *testing.T) {
 	assert.Equal(t, "1234abcd", p.accessToken)
 	assert.Equal(t, DefaultMarketplaceURL, p.baseURL.String())
 
-	assert.Nil(t, httpmock.AllStubsCalled())
+	assert.Nil(t, simular.AllStubsCalled())
 }
-
-//func TestRegisterOffering(t *testing.T) {
-//	id := "Thingful-Temperature_Service"
-//	secret := "mT1WkU1DQ56SX61l4mtIvg=="
-//
-//	provider, err := bigiot.NewProvider(id, secret, bigiot.WithMarketplace("https://market-dev.big-iot.org"))
-//	assert.Nil(t, err)
-//
-//	offeringDescription := &bigiot.OfferingDescription{
-//		Name:    "Simple Weather",
-//		RdfType: bigiot.RdfType("bigiot:Weather"),
-//		Endpoints: []bigiot.Endpoint{
-//			{
-//				URI:          "http://example.com/weather",
-//				EndpointType: bigiot.HTTPGet,
-//			},
-//		},
-//		InputData: []bigiot.DataField{
-//			{
-//				Name:    "longitude",
-//				RdfType: bigiot.RdfType("schema:longitude"),
-//			},
-//			{
-//				Name:    "latitude",
-//				RdfType: bigiot.RdfType("schema:latitude"),
-//			},
-//		},
-//		OutputData: []bigiot.DataField{
-//			{
-//				Name:    "temperature",
-//				RdfType: bigiot.RdfType("schema:airTemperatureValue"),
-//			},
-//		},
-//		Extent: bigiot.Extent{
-//			City: "Edinburgh",
-//		},
-//	}
-//
-//	assert.NotNil(t, offeringDescription)
-//
-//	_, err = provider.RegisterOffering(offeringDescription)
-//	assert.Nil(t, err)
-//	//assert.NotNil(t, offering)
-//}
-//
-//func TestOffering(t *testing.T) {
-//	httpmock.Activate()
-//	defer httpmock.DeactivateAndReset()
-//
-//	httpmock.RegisterStubRequest(
-//		httpmock.NewStubRequest(
-//			http.MethodGet,
-//			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-//			httpmock.NewStringResponder(200, "1234abcd"),
-//		).WithHeader(
-//			&http.Header{
-//				"Accept": []string{"text/plain"},
-//			},
-//		),
-//	)
-//
-//	httpmock.RegisterStubRequest(
-//		httpmock.NewStubRequest(
-//			http.MethodPost,
-//			"https://market.big-iot.org/graphql",
-//			httpmock.NewStringResponder(200, `{
-//				"data": {
-//					"offering": {
-//						"id": "offeringID",
-//						"name": "offering name"
-//					}
-//				}
-//			}`),
-//		).WithHeader(
-//			&http.Header{
-//				"Authorization": []string{"Bearer 1234abcd"},
-//			},
-//		),
-//	)
-//
-//	provider, err := bigiot.NewProvider("id", "secret")
-//	assert.Nil(t, err)
-//
-//	err = provider.Authenticate()
-//	assert.Nil(t, err)
-//
-//	offering, err := provider.Offering("offeringID")
-//	assert.Nil(t, err)
-//	assert.NotNil(t, offering)
-//	assert.Equal(t, "offeringID", offering.ID)
-//}
-//

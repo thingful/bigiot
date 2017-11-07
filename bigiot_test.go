@@ -15,213 +15,83 @@
 package bigiot_test
 
 import (
+	"bytes"
 	"context"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thingful/bigiot"
+	"github.com/thingful/simular"
 )
 
-//func TestProviderConstructor(t *testing.T) {
-//	p, err := bigiot.NewProvider("id", "secret")
-//	assert.Nil(t, err)
-//	assert.Equal(t, "id", p.ID)
-//	assert.Equal(t, "secret", p.Secret)
-//	assert.Equal(t, bigiot.DefaultMarketplaceURL, p.BaseURL.String())
-//}
-//
-//func TestProviderConstructorWithMarketplace(t *testing.T) {
-//	p, err := bigiot.NewProvider(
-//		"id",
-//		"secret",
-//		bigiot.WithMarketplace("https://market-dev.big-iot.org"),
-//	)
-//	assert.Nil(t, err)
-//	assert.Equal(t, "https://market-dev.big-iot.org", p.BaseURL.String())
-//}
-//
-//func TestProviderConstructorInvalidMarketplace(t *testing.T) {
-//	_, err := bigiot.NewProvider(
-//		"id",
-//		"secret",
-//		bigiot.WithMarketplace("http ://market-dev.big-iot.org"),
-//	)
-//	assert.NotNil(t, err)
-//}
-//
-//func TestAuthenticate(t *testing.T) {
-//	httpmock.Activate()
-//	defer httpmock.DeactivateAndReset()
-//
-//	httpmock.RegisterStubRequest(
-//		httpmock.NewStubRequest(
-//			http.MethodGet,
-//			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-//			httpmock.NewStringResponder(200, "1234abcd"),
-//		).WithHeader(
-//			&http.Header{
-//				"User-Agent": []string{"bigiot/" + bigiot.Version + " (https://github.com/thingful/bigiot)"},
-//				"Accept":     []string{"text/plain"},
-//			},
-//		),
-//	)
-//
-//	p, _ := bigiot.NewProvider("id", "secret")
-//	assert.Nil(t, p.Authenticate())
-//	assert.Equal(t, "1234abcd", p.AccessToken)
-//	assert.Equal(t, bigiot.DefaultMarketplaceURL, p.BaseURL.String())
-//
-//	assert.Nil(t, httpmock.AllStubsCalled())
-//}
-//
-//func TestAuthenticateCustomUserAgent(t *testing.T) {
-//	httpmock.Activate()
-//	defer httpmock.DeactivateAndReset()
-//
-//	httpmock.RegisterStubRequest(
-//		httpmock.NewStubRequest(
-//			http.MethodGet,
-//			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-//			httpmock.NewStringResponder(200, "1234abcd"),
-//		).WithHeader(
-//			&http.Header{
-//				"User-Agent": []string{"foo"},
-//				"Accept":     []string{"text/plain"},
-//			},
-//		),
-//	)
-//
-//	p, _ := bigiot.NewProvider(
-//		"id",
-//		"secret",
-//		bigiot.WithUserAgent("foo"),
-//	)
-//	assert.Nil(t, p.Authenticate())
-//	assert.Equal(t, "1234abcd", p.AccessToken)
-//	assert.Equal(t, bigiot.DefaultMarketplaceURL, p.BaseURL.String())
-//
-//	assert.Nil(t, httpmock.AllStubsCalled())
-//}
-//
-//type testTripper struct {
-//	proxied http.RoundTripper
-//}
-//
-//func (t testTripper) RoundTrip(req *http.Request) (*http.Response, error) {
-//	return t.proxied.RoundTrip(req)
-//}
-//
-//func TestAuthenticateCustomTransport(t *testing.T) {
-//	httpmock.Activate()
-//	defer httpmock.DeactivateAndReset()
-//
-//	httpmock.RegisterStubRequest(
-//		httpmock.NewStubRequest(
-//			http.MethodGet,
-//			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-//			httpmock.NewStringResponder(200, "1234abcd"),
-//		).WithHeader(
-//			&http.Header{
-//				"Accept": []string{"text/plain"},
-//			},
-//		),
-//	)
-//
-//	client := &http.Client{
-//		Timeout:   1 * time.Second,
-//		Transport: testTripper{proxied: http.DefaultTransport},
-//	}
-//
-//	p, _ := bigiot.NewProvider(
-//		"id",
-//		"secret",
-//		bigiot.WithHTTPClient(client),
-//	)
-//	assert.Nil(t, p.Authenticate())
-//	assert.Equal(t, "1234abcd", p.AccessToken)
-//	assert.Equal(t, bigiot.DefaultMarketplaceURL, p.BaseURL.String())
-//
-//	assert.Nil(t, httpmock.AllStubsCalled())
-//}
-
 func TestRegisterOffering(t *testing.T) {
-	id := "thingful2-TestProvider"
-	secret := "F2mnsTwBQYWTwRL03xYvbg=="
+	simular.Activate()
+	defer simular.DeactivateAndReset()
 
-	provider, err := bigiot.NewProvider(id, secret)
+	expirationTime := time.Unix(0, 1509983101577000000)
+
+	simular.RegisterStubRequests(
+		simular.NewStubRequest(
+			http.MethodGet,
+			"https://market.big-iot.org/accessToken?clientId=Provider&clientSecret=secret",
+			simular.NewStringResponder(200, "1234abcd"),
+		),
+		simular.NewStubRequest(
+			http.MethodPost,
+			"https://market.big-iot.org/graphql",
+			simular.NewStringResponder(200, `{"data": {"addOffering": {"id": "Organization-Provider-TestOffering", "activation": { "status": true, "expirationTime": 1509983101577}}}}`),
+			simular.WithBody(
+				bytes.NewBufferString(`{"query":"mutation addOffering { addOffering ( input: { id: \"Provider\", localId: \"TestOffering\", name: \"Test Offering\", activation: {status: true, expirationTime: 1509983101577} , rdfUri: \"\", inputData: [], outputData: [{name: \"value\", rdfUri: \"schema:random\"} ], endpoints: [{uri: \"https://example.com/random\", endpointType: HTTP_GET, accessInterfaceType: EXTERNAL} ], license: OPEN_DATA_LICENSE, price: {money: {amount: 0.001, currency: EUR}, pricingModel: PER_ACCESS}, extent: {city: \"Berlin\"} } ) { id name activation { status expirationTime } } }"}`),
+			),
+		),
+	)
+
+	provider, err := bigiot.NewProvider("Provider", "secret")
 	assert.Nil(t, err)
 
-	expirationTime := time.Now().Add(time.Duration(10) * time.Minute)
+	err = provider.Authenticate()
+	assert.Nil(t, err)
 
-	offering := &bigiot.AddOffering{
-		ID:      bigiot.String("thingful2-Test"),
-		LocalID: bigiot.String("Test"),
-		Name:    bigiot.String("Test Offering"),
-		OutputData: []bigiot.DataFieldInput{
+	offeringInput := &bigiot.OfferingInput{
+		LocalID: "TestOffering",
+		Name:    "Test Offering",
+		OutputData: []bigiot.DataField{
 			{
-				Name:   bigiot.String("value"),
-				RdfURI: bigiot.String("schema:random"),
+				Name:   "value",
+				RdfURI: "schema:random",
 			},
 		},
-		Endpoints: []bigiot.EndpointInput{
+		Endpoints: []bigiot.Endpoint{
 			{
-				URI:                 bigiot.String("https://localhost:9020/random"),
+				URI:                 "https://example.com/random",
 				EndpointType:        bigiot.HTTPGet,
 				AccessInterfaceType: bigiot.External,
 			},
 		},
 		License: bigiot.OpenDataLicense,
-		Price: bigiot.PriceInput{
-			Money: bigiot.MoneyInput{
-				Amount:   bigiot.BigDecimal(0.001),
+		Price: bigiot.Price{
+			Money: bigiot.Money{
+				Amount:   0.001,
 				Currency: bigiot.EUR,
 			},
 			PricingModel: bigiot.PerAccess,
 		},
-		Extent: bigiot.AddressInput{
-			City: bigiot.String("Edinburgh"),
+		Extent: bigiot.Address{
+			City: "Berlin",
 		},
-		Activation: bigiot.ActivationInput{
-			Status:         bigiot.Boolean(true),
-			ExpirationTime: bigiot.Long(expirationTime.Unix()),
+		Activation: bigiot.Activation{
+			Status:         true,
+			ExpirationTime: expirationTime,
 		},
 	}
-	//offeringDescription := &bigiot.OfferingDescription{
-	//	Name:    "Simple Weather",
-	//	RdfType: bigiot.RdfType("bigiot:Weather"),
-	//	Endpoints: []bigiot.Endpoint{
-	//		{
-	//			URI:          "http://example.com/weather",
-	//			EndpointType: bigiot.HTTPGet,
-	//		},
-	//	},
-	//	InputData: []bigiot.DataField{
-	//		{
-	//			Name:    "longitude",
-	//			RdfType: bigiot.RdfType("schema:longitude"),
-	//		},
-	//		{
-	//			Name:    "latitude",
-	//			RdfType: bigiot.RdfType("schema:latitude"),
-	//		},
-	//	},
-	//	OutputData: []bigiot.DataField{
-	//		{
-	//			Name:    "temperature",
-	//			RdfType: bigiot.RdfType("schema:airTemperatureValue"),
-	//		},
-	//	},
-	//	Extent: bigiot.Extent{
-	//		City: "Edinburgh",
-	//	},
-	//}
 
-	//assert.NotNil(t, offeringDescription)
-
-	_, err = provider.RegisterOffering(context.Background(), offering)
+	offering, err := provider.RegisterOffering(context.Background(), offeringInput)
 	assert.Nil(t, err)
-	//assert.NotNil(t, offering)
+	assert.Equal(t, "Organization-Provider-TestOffering", offering.ID)
+	assert.True(t, offering.Activation.Status)
+	assert.Equal(t, expirationTime.UTC(), offering.Activation.ExpirationTime)
 }
 
 //func TestOffering(t *testing.T) {

@@ -15,11 +15,11 @@
 package bigiot
 
 import (
-	"context"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
-
-	"github.com/shurcooL/graphql"
+	"time"
 )
 
 const (
@@ -31,43 +31,127 @@ const (
 	DefaultTimeout = 10
 )
 
-// Base is our base BIGIoT client object. It contains the runtime state of our
+// BIGIoT is our base BIGIoT client object. It contains the runtime state of our
 // BIG IoT client implementations. It includes a number of unexported fields, as
 // uses of this library are not permitted to modify this object directly; rather
 // they should use one of the functional configuration functions when
 // initializing an instance of the client.
-type Base struct {
-	userAgent     string
-	httpClient    *http.Client
-	baseURL       *url.URL
-	id            string
-	secret        string
-	accessToken   string
-	graphqlClient *graphql.Client
+type BIGIoT struct {
+	ID          string
+	Secret      string
+	userAgent   string
+	httpClient  *http.Client
+	baseURL     *url.URL
+	accessToken string
+	graphqlURL  string
 }
 
-func (b *Base) Query(ctx context.Context, q interface{}, variables map[string]interface{}) error {
-	return b.graphqlClient.Query(ctx, q, variables)
-}
+func NewBIGIoT(id, secret string, options ...Option) (*BIGIoT, error) {
+	// this is a known good URL, so we can ignore the error here
+	u, _ := url.Parse(DefaultMarketplaceURL)
 
-func (b *Base) Mutate(ctx context.Context, m interface{}, input Input, variables map[string]interface{}) error {
-	if variables == nil {
-		variables = map[string]interface{}{"input": input}
-	} else {
-		variables["input"] = input
+	// set up a default http client, that enforces our default timeout. Users will
+	// have to explicitly override if they want a non-timing out client.
+	httpClient := &http.Client{
+		Timeout: time.Second * DefaultTimeout,
 	}
 
-	return b.graphqlClient.Mutate(ctx, m, variables)
+	base := &BIGIoT{
+		ID:         id,
+		Secret:     secret,
+		userAgent:  fmt.Sprintf("bigiot/%s (https://github.com/thingful/bigiot)", Version),
+		baseURL:    u,
+		httpClient: httpClient,
+	}
+
+	var err error
+
+	// apply all functional options
+	for _, opt := range options {
+		err = opt(base)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// now wrap our transport to add authentication header if accessToken is available
+	transport := http.DefaultTransport
+	if base.httpClient.Transport != nil {
+		transport = base.httpClient.Transport
+	}
+
+	base.httpClient.Transport = &authTransport{
+		proxied: transport,
+		config:  base,
+	}
+
+	// setup our graphql client pointing at the specified marketplace, and using
+	// our auth enabled http client
+	graphqlURL := *base.baseURL
+	graphqlURL.Path = "/graphql"
+
+	base.graphqlURL = graphqlURL.String()
+
+	return base, nil
+}
+
+// Authenticate makes a call to the /accessToken endpoint on the marketplace to
+// obtain an access token which the client will then be able to use when making
+// requests to the graphql endpoint. We make a GET request passing over our
+// client id and secret, and get back a token if our credentials are valid.
+func (b *BIGIoT) Authenticate() (err error) {
+	// deference to make sure we clone our baseURL property rather than modifying
+	// the pointed to value
+	authURL := *b.baseURL
+	authURL.Path = "/accessToken"
+
+	params := &url.Values{
+		"clientId":     []string{b.ID},
+		"clientSecret": []string{b.Secret},
+	}
+
+	authURL.RawQuery = params.Encode()
+
+	req, err := http.NewRequest(http.MethodGet, authURL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set(acceptHeader, textPlain)
+
+	resp, err := b.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return ErrUnexpectedResponse
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	b.accessToken = string(body)
+
+	return nil
 }
 
 // Option is a type alias for our functional configuration type.
-type Option func(*Base) error
+type Option func(*BIGIoT) error
 
 // WithMarketplace is a functional configuration option allowing us to
 // optionally set a custom marketplace URI when constructing a BIGIoT instance.
-func WithMarketplace(marketplaceURI string) Option {
-	return func(c *Base) error {
-		u, err := url.Parse(marketplaceURI)
+func WithMarketplace(marketplaceURL string) Option {
+	return func(c *BIGIoT) error {
+		u, err := url.Parse(marketplaceURL)
 		if err != nil {
 			return err
 		}
@@ -81,7 +165,7 @@ func WithMarketplace(marketplaceURI string) Option {
 // WithUserAgent allows the caller to specify the user agent that should be
 // sent to the marketplace.
 func WithUserAgent(userAgent string) Option {
-	return func(b *Base) error {
+	return func(b *BIGIoT) error {
 		b.userAgent = userAgent
 
 		return nil
@@ -91,9 +175,16 @@ func WithUserAgent(userAgent string) Option {
 // WithHTTPClient allows a caller to pass in a custom http Client allowing them
 // to customize the behaviour of our HTTP interactions.
 func WithHTTPClient(client *http.Client) Option {
-	return func(b *Base) error {
+	return func(b *BIGIoT) error {
 		b.httpClient = client
 
 		return nil
 	}
+}
+
+// Serializable is an interface for an instance that can serialize itself into
+// some form that the BIG IoT Marketplace will accept as input for either query
+// or mutatation.
+type Serializable interface {
+	Serialize() string
 }

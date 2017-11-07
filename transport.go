@@ -15,18 +15,8 @@
 package bigiot
 
 import (
-	"fmt"
+	"bytes"
 	"net/http"
-)
-
-const (
-	userAgentKey = "User-Agent"
-
-	authorizationKey = "Authorization"
-
-	acceptKey = "Accept"
-
-	textPlain = "text/plain"
 )
 
 // authTransport is an internal implementation of the RoundTripper interface that
@@ -34,29 +24,29 @@ const (
 // the BIGIoT marketplace. This custom transport adds auth credentials if any
 // are set, and also adds a user-agent string to send to the server.
 type authTransport struct {
-	config  *Base
+	config  *BIGIoT
 	proxied http.RoundTripper
 }
 
 // RoundTrip is our implementation of RoundTripper, which does the job of adding
 // auth credentials if any are present
 func (t authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	fmt.Println(req.Body)
 	if t.config.accessToken != "" {
-		req.Header.Set(authorizationKey, "Bearer "+t.config.accessToken)
+		var buf bytes.Buffer
+		buf.WriteString("Bearer ")
+		buf.WriteString(t.config.accessToken)
+		req.Header.Set(authorizationHeader, buf.String())
 	}
 
 	// set our internal user agent if the client hasn't supplied one
-	if req.Header.Get(userAgentKey) == "" {
-		req.Header.Set(userAgentKey, t.config.userAgent)
+	if req.Header.Get(userAgentHeader) == "" {
+		req.Header.Set(userAgentHeader, t.config.userAgent)
 	}
 
 	res, err := t.proxied.RoundTrip(req)
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println(res)
 
 	return res, err
 }

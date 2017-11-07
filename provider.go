@@ -15,21 +15,18 @@
 package bigiot
 
 import (
+	"bytes"
 	"context"
-	"fmt"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"time"
-
-	"github.com/shurcooL/graphql"
 )
 
 // Provider is our type for interacting with the marketplace from the
 // perspective of a data provider. We embed the base Config type which stores
 // our runtime configuration (auth credentials, base url etc.).
 type Provider struct {
-	*Base
+	*BIGIoT
 }
 
 // NewProvider instantiates and returns a configured Provider instance. The
@@ -39,99 +36,12 @@ type Provider struct {
 // of the variadic third parameter, which can be used for additional
 // configuration.
 func NewProvider(id, secret string, options ...Option) (*Provider, error) {
-	// this is a known good URL, so we can ignore the error here
-	u, _ := url.Parse(DefaultMarketplaceURL)
-
-	// set up a default http client, that enforces our default timeout. Users will
-	// have to explicitly override if they want a non-timing out client.
-	httpClient := &http.Client{
-		Timeout: time.Second * DefaultTimeout,
-	}
-
-	config := &Base{
-		id:         id,
-		secret:     secret,
-		userAgent:  fmt.Sprintf("bigiot/%s (https://github.com/thingful/bigiot)", Version),
-		baseURL:    u,
-		httpClient: httpClient,
-	}
-
-	var err error
-
-	// apply all functional options
-	for _, opt := range options {
-		err = opt(config)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// now wrap our transport to add authentication header if accessToken is available
-	transport := http.DefaultTransport
-	if config.httpClient.Transport != nil {
-		transport = config.httpClient.Transport
-	}
-
-	config.httpClient.Transport = &authTransport{
-		proxied: transport,
-		config:  config,
-	}
-
-	// setup our graphql client pointing at the specified marketplace, and using
-	// our auth enabled http client
-	graphqlURL := *config.baseURL
-	graphqlURL.Path = "/graphql"
-
-	config.graphqlClient = graphql.NewClient(graphqlURL.String(), config.httpClient, nil)
-
-	return &Provider{Base: config}, nil
-}
-
-// Authenticate attempts to connect to the marketplace and authenticate the
-// client. Returns any error to the caller.
-func (p *Provider) Authenticate() (err error) {
-	// deference to make sure we clone our baseURL property rather than modifying
-	// the pointed to value
-	authURL := *p.baseURL
-	authURL.Path = "/accessToken"
-
-	params := &url.Values{
-		"clientId":     []string{p.id},
-		"clientSecret": []string{p.secret},
-	}
-
-	authURL.RawQuery = params.Encode()
-
-	req, err := http.NewRequest(http.MethodGet, authURL.String(), nil)
+	base, err := NewBIGIoT(id, secret, options...)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	req.Header.Set(acceptKey, textPlain)
-
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		if cerr := resp.Body.Close(); cerr != nil && err == nil {
-			err = cerr
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return ErrUnexpectedResponse
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	p.accessToken = string(body)
-
-	return nil
+	return &Provider{BIGIoT: base}, nil
 }
 
 // Offering returns details of an offering on being given the ID of that
@@ -162,20 +72,59 @@ func (p *Provider) Authenticate() (err error) {
 // 	}, nil
 // }
 
-func (p *Provider) RegisterOffering(ctx context.Context, offering *AddOffering) (*Offering, error) {
-	var mutation struct {
-		//AddOffering AddOffering `graphql:"addOffering(input: $addOffering)"`
-		AddOffering AddOffering `graphql:"addOffering()"`
+func (p *Provider) RegisterOffering(ctx context.Context, offering *OfferingInput) (*Offering, error) {
+	offering.providerID = p.ID
+
+	q := &Query{
+		Query: offering.Serialize(),
 	}
 
-	fmt.Println(mutation)
-
-	err := p.Base.Mutate(ctx, &mutation, offering, nil)
+	b, err := json.Marshal(q)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println(mutation)
+	req, err := http.NewRequest(http.MethodPost, p.graphqlURL, bytes.NewBuffer(b))
+	if err != nil {
+		return nil, err
+	}
 
-	return nil, nil
+	req.Header.Set(contentTypeHeader, applicationJSON)
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, ErrUnexpectedResponse
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	addOffering := addOfferingResponse{}
+
+	err = json.Unmarshal(body, &addOffering)
+	if err != nil {
+		return nil, err
+	}
+
+	return &addOffering.Data.Offering, nil
+}
+
+// addOfferingResponse is a unexported type used when parsing the response from
+// calling RegisterOffering
+type addOfferingResponse struct {
+	Data struct {
+		Offering Offering `json:"addOffering"`
+	} `json:"data"`
 }
