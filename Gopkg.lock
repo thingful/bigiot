@@ -20,6 +20,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  revision = "dbeaa9332f19a944acb5736b4456cfcc02140e29"
+  version = "v3.1.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/goware/urlx"
   packages = ["."]
@@ -58,6 +64,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0d22847324d702e8cde1505337a21a073ac20ff528b702469d5976b5cddb8c7a"
+  inputs-digest = "23ab57ad69f61921a8d612c90ff62b72e5efce71e99320b7a105822626ab35eb"
   solver-name = "gps-cdcl"
   solver-version = 1
