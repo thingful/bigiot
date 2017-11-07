@@ -1,5 +1,20 @@
 language: go
+
 sudo: false
+
+env:
+    global:
+        - DEP_VERSION="v0.3.2"
 go:
     - 1.9.x
     - tip
+
+before_install:
+    - curl -o /tmp/dep --location https://github.com/golang/dep/releases/download/${DEP_VERSION}/dep-linux-amd64
+    - chmod +x /tmp/dep
+    - export PATH=$PATH:/tmp/
+
+install:
+    - dep ensure -v
+
+script: make test
