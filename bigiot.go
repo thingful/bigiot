@@ -82,7 +82,7 @@ func NewBIGIoT(id, secret string, options ...Option) (*BIGIoT, error) {
 
 	base.httpClient.Transport = &authTransport{
 		proxied: transport,
-		config:  base,
+		bigiot:  base,
 	}
 
 	// setup our graphql client pointing at the specified marketplace, and using
