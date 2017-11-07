@@ -12,11 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package bigiot is an attempt at porting the BIGIot client library from Java
+// to Go, adapting the library where appropriate to better fit Go idioms and
+// practices. This is very much a work in progress, so currently is a long way
+// from supporting the same range of functionality as the Java library.
+//
+// Planned functionality:
+//   * register an offering in the marketplace
+//   * unregister an offering from the marketplace
+//   * validating tokens presented by offering subscribers
+//   * discovering an offering in the marketplace
+//   * subscribing to an offering
+//
 package bigiot
-
-const (
-	// Version string for the library. By default this is added to the user-agent
-	// string sent by the client, but users of the library can override the user
-	// agent string when instantiating the client.
-	Version = "c62c33c"
-)
