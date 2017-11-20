@@ -20,6 +20,8 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 // Provider is our type for interacting with the marketplace from the
@@ -127,4 +129,12 @@ type addOfferingResponse struct {
 	Data struct {
 		Offering Offering `json:"addOffering"`
 	} `json:"data"`
+}
+
+func (p *Provider) ValidateToken(token string) (*jwt.Token, error) {
+	if p.Secret == "" {
+		return nil, ErrSecretNotSet
+	}
+
+	return nil, nil
 }
