@@ -18,5 +18,5 @@ const (
 	// Version string for the library. By default this is added to the user-agent
 	// string sent by the client, but users of the library can override the user
 	// agent string when instantiating the client.
-	Version = "v0.0.2"
+	Version = "v0.0.1-3-g094d359"
 )
