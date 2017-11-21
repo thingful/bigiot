@@ -235,8 +235,9 @@ func (a *Activation) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Offering is an output type used when returning information about a created
-// offering on creation.
+// Offering is an output type used when returning information about an offering.
+// This can happen either after creating an offering or if we get information on
+// an offering from the marketplace.
 type Offering struct {
 	ID         string     `json:"id"`
 	Name       string     `json:"name"`

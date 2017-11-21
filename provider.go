@@ -23,7 +23,7 @@ import (
 // perspective of a data provider. We embed the base Config type which stores
 // our runtime configuration (auth credentials, base url etc.).
 type Provider struct {
-	*BIGIoT
+	*base
 }
 
 // NewProvider instantiates and returns a configured Provider instance. The
@@ -33,12 +33,12 @@ type Provider struct {
 // of the variadic third parameter, which can be used for additional
 // configuration.
 func NewProvider(id, secret string, options ...Option) (*Provider, error) {
-	base, err := NewBIGIoT(id, secret, options...)
+	b, err := newBase(id, secret, options...)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Provider{BIGIoT: base}, nil
+	return &Provider{base: b}, nil
 }
 
 // Offering returns details of an offering on being given the ID of that
@@ -74,9 +74,9 @@ func NewProvider(id, secret string, options ...Option) (*Provider, error) {
 // Offering as part of the input AddOffering instance. The function returns a
 // populated Offering instance or nil and an error.
 func (p *Provider) RegisterOffering(ctx context.Context, offering *AddOffering) (*Offering, error) {
-	offering.providerID = p.ID
+	offering.providerID = p.id
 
-	body, err := p.Query(ctx, offering)
+	body, err := p.query(ctx, offering)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (p *Provider) RegisterOffering(ctx context.Context, offering *AddOffering) 
 // instance is serialized and the query executed against the GraphQL server. The
 // function returns an error if anything goes wrong.
 func (p *Provider) DeleteOffering(ctx context.Context, offering *DeleteOffering) error {
-	_, err := p.Query(ctx, offering)
+	_, err := p.query(ctx, offering)
 	if err != nil {
 		return err
 	}

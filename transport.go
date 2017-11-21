@@ -24,7 +24,7 @@ import (
 // the BIGIoT marketplace. This custom transport adds auth credentials if any
 // are set, and also adds a user-agent string to send to the server.
 type authTransport struct {
-	bigiot  *BIGIoT
+	bigiot  *base
 	proxied http.RoundTripper
 }
 

@@ -14,14 +14,15 @@
 
 package bigiot
 
-// Query is a type used when composing GraphQL queries.
-type Query struct {
+// query is a type used when composing GraphQL queries. We use it when
+// marshalling our graphql queries before sending to the marketplace.
+type query struct {
 	Query string `json:"query"`
 }
 
-// Serializable is an interface for an instance that can serialize itself into
+// serializable is an interface for an instance that can serialize itself into
 // some form that the BIG IoT Marketplace will accept as input for either query
 // or mutatation.
-type Serializable interface {
+type serializable interface {
 	Serialize() string
 }
