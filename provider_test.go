@@ -12,8 +12,8 @@ import (
 func TestNewProvider(t *testing.T) {
 	p, err := NewProvider("id", "secret")
 	assert.Nil(t, err)
-	assert.Equal(t, "id", p.ID)
-	assert.Equal(t, "secret", p.Secret)
+	assert.Equal(t, "id", p.id)
+	assert.Equal(t, "secret", p.secret)
 	assert.Equal(t, DefaultMarketplaceURL, p.baseURL.String())
 }
 

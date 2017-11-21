@@ -21,11 +21,11 @@ import (
 	"time"
 )
 
-// OfferingInput is the type used to register an offering with the marketplace.
+// AddOffering is the type used to register an offering with the marketplace.
 // It contains information about the offerings inputs and outputs, its
 // endpoints, license and price. In addition this is how offerings specify that
 // they are active.
-type OfferingInput struct {
+type AddOffering struct {
 	providerID string
 	LocalID    string
 	Name       string
@@ -44,7 +44,7 @@ type OfferingInput struct {
 // implemented by manually building up the query using a bytes.Buffer as the
 // existing Go graphql libraries didn't seem able to communicate with the
 // marketplace.
-func (o *OfferingInput) Serialize() string {
+func (o *AddOffering) Serialize() string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`mutation addOffering { addOffering ( input: { id: "`)
@@ -91,17 +91,15 @@ func (o *OfferingInput) Serialize() string {
 	return buf.String()
 }
 
-type Offering struct {
-	ID         string     `json:"id"`
-	Name       string     `json:"name"`
-	Activation Activation `json:"activation"`
-}
-
+// DataField captures information about an offering's inputs or outputs. Used
+// when creating an offering.
 type DataField struct {
 	Name   string
 	RdfURI string
 }
 
+// Serialize is our implementation of Serializable for DataField. Serializes
+// into a form that the marketplace understands.
 func (d *DataField) Serialize() string {
 	var buf bytes.Buffer
 
@@ -114,12 +112,14 @@ func (d *DataField) Serialize() string {
 	return buf.String()
 }
 
+// Endpoint captures information about the endpoint of an offering.
 type Endpoint struct {
 	EndpointType        EndpointType
 	URI                 string
 	AccessInterfaceType AccessInterfaceType
 }
 
+// Serialize is Endpoint's implementation of our Serializable interface
 func (e *Endpoint) Serialize() string {
 	var buf bytes.Buffer
 
@@ -134,10 +134,14 @@ func (e *Endpoint) Serialize() string {
 	return buf.String()
 }
 
+// Address is how the BIG IoT marketplace defines geographical constraints when
+// registering an offering.
 type Address struct {
 	City string
 }
 
+// Serialize is our implementation of Serializable - to convert into BIG IoT
+// form.
 func (a *Address) Serialize() string {
 	var buf bytes.Buffer
 
@@ -148,11 +152,13 @@ func (a *Address) Serialize() string {
 	return buf.String()
 }
 
+// Price captures information about the pricing of an offering.
 type Price struct {
 	PricingModel PricingModel
 	Money        Money
 }
 
+// Serialize is our implementation of Serializable for Price objects.
 func (p *Price) Serialize() string {
 	var buf bytes.Buffer
 
@@ -165,11 +171,15 @@ func (p *Price) Serialize() string {
 	return buf.String()
 }
 
+// Money is used to capture price information for the offering. Note we aren't
+// using precise numeric types here so this is not suitable for precision
+// calculations.
 type Money struct {
 	Amount   float64 // TODO: look at more precise numeric type here
 	Currency Currency
 }
 
+// Serialize is our implementation of Serializable for Money objects.
 func (m *Money) Serialize() string {
 	var buf bytes.Buffer
 
@@ -204,6 +214,9 @@ func (a *Activation) Serialize() string {
 	return buf.String()
 }
 
+// UnmarshalJSON is an implementation of the json Unmarshaler interface. We add
+// a custom implementation to handle converting timestamps from epoch
+// milliseconds into golang time.Time objects.
 func (a *Activation) UnmarshalJSON(b []byte) error {
 	// create anonymous struct for unmarshalling
 	d := struct {
@@ -220,4 +233,29 @@ func (a *Activation) UnmarshalJSON(b []byte) error {
 	a.ExpirationTime = fromEpochMs(d.ExpirationTime)
 
 	return nil
+}
+
+// Offering is an output type used when returning information about an offering.
+// This can happen either after creating an offering or if we get information on
+// an offering from the marketplace.
+type Offering struct {
+	ID         string     `json:"id"`
+	Name       string     `json:"name"`
+	Activation Activation `json:"activation"`
+}
+
+// DeleteOffering is an input type used to delete or unregister an offering.
+type DeleteOffering struct {
+	ID string `json:"id"`
+}
+
+// Serialize is our implementation of Serializable for DeleteOffering objects.
+func (d *DeleteOffering) Serialize() string {
+	var buf bytes.Buffer
+
+	buf.WriteString(`mutation deleteOffering { deleteOffering ( input: { id: "`)
+	buf.WriteString(d.ID)
+	buf.WriteString(`" } ) { id } }`)
+
+	return buf.String()
 }

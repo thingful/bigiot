@@ -15,7 +15,7 @@
 package bigiot
 
 // EndpointType represents the type of an Endpoint accessible via the BIGIoT
-// Marketplace
+// Marketplace.
 type EndpointType string
 
 const (
