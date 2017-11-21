@@ -1,4 +1,4 @@
-# bigiot
+# bigiot [![Build Status](https://travis-ci.org/thingful/bigiot.svg?branch=master)](https://travis-ci.org/thingful/bigiot)
 
 Go implementation of the BIG IoT library/SDK
 
@@ -13,31 +13,8 @@ Go implementation of the BIG IoT library/SDK
 * Discovering an offering in the marketplace
 * Subscribing to an offering
 
-## Create provider client with custom marketplace
+## Documentation
 
-```go
-provider := bigiot.NewProvider(
-    "id",
-    "secret",
-    bigiot.WithMarketplace("https://market-dev.big-iot.org"),
-)
-```
+For more documentation please see the documentation at: 
 
-## List offerings
-
-```go
-provider := bigiot.NewProvider("id", "secret")
-err := provider.Authenticate()
-if err != nil {
-    panic(err)
-}
-
-offerings, err := provider.Offerings()
-if err != nil {
-    panic(err)
-}
-
-for _, offering := range offerings {
-    fmt.Println(offering.Name)
-}
-```
+[![GoDoc](https://godoc.org/github.com/thingful/bigiot?status.svg)](https://godoc.org/github.com/thingful/bigiot)
