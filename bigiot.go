@@ -15,6 +15,9 @@
 package bigiot
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -46,7 +49,7 @@ type BIGIoT struct {
 	graphqlURL  string
 }
 
-func NewBIGIoT(id, secret string, options ...Option) (*BIGIoT, error) {
+func newBIGIoT(id, secret string, options ...Option) (*BIGIoT, error) {
 	// this is a known good URL, so we can ignore the error here
 	u, _ := url.Parse(DefaultMarketplaceURL)
 
@@ -85,8 +88,7 @@ func NewBIGIoT(id, secret string, options ...Option) (*BIGIoT, error) {
 		bigiot:  base,
 	}
 
-	// setup our graphql client pointing at the specified marketplace, and using
-	// our auth enabled http client
+	// set the marketplace graphql endpoint
 	graphqlURL := *base.baseURL
 	graphqlURL.Path = "/graphql"
 
@@ -144,11 +146,60 @@ func (b *BIGIoT) Authenticate() (err error) {
 	return nil
 }
 
+// Query is a utility function that takes as input a context.Context (for
+// cancellation by the caller), and a Serializable instance representing a query
+// to be made to the marketplace. This method then makes the request and returns
+// a slice of bytes which can then be unmarshalled by the caller to extract the
+// returned data.
+func (b *BIGIoT) Query(ctx context.Context, s Serializable) (_ []byte, err error) {
+	q := &Query{
+		Query: s.Serialize(),
+	}
+
+	bt, err := json.Marshal(q)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, b.graphqlURL, bytes.NewBuffer(bt))
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set(contentTypeHeader, applicationJSON)
+
+	req = req.WithContext(ctx)
+
+	resp, err := b.httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if cerr := resp.Body.Close(); cerr != nil && err == nil {
+			err = cerr
+		}
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, ErrUnexpectedResponse
+	}
+
+	return ioutil.ReadAll(resp.Body)
+}
+
 // Option is a type alias for our functional configuration type.
 type Option func(*BIGIoT) error
 
 // WithMarketplace is a functional configuration option allowing us to
 // optionally set a custom marketplace URI when constructing a BIGIoT instance.
+//
+// Example:
+// 		provider, _ := bigiot.NewProvider(
+//			providerID,
+//			providerSecret,
+//			bigiot.WithMarketplace("https://market-dev.bigiot.org"),
+// 		)
 func WithMarketplace(marketplaceURL string) Option {
 	return func(c *BIGIoT) error {
 		u, err := url.Parse(marketplaceURL)
@@ -164,6 +215,13 @@ func WithMarketplace(marketplaceURL string) Option {
 
 // WithUserAgent allows the caller to specify the user agent that should be
 // sent to the marketplace.
+//
+// Example:
+// 		provider, _ := bigiot.NewProvider(
+//			providerID,
+//			providerSecret,
+//			bigiot.WithUserAgent("BIGIoT App"),
+// 		)
 func WithUserAgent(userAgent string) Option {
 	return func(b *BIGIoT) error {
 		b.userAgent = userAgent
@@ -174,17 +232,17 @@ func WithUserAgent(userAgent string) Option {
 
 // WithHTTPClient allows a caller to pass in a custom http Client allowing them
 // to customize the behaviour of our HTTP interactions.
+//
+// Example:
+// 		provider, _ := bigiot.NewProvider(
+//			providerID,
+//			providerSecret,
+//			bigiot.WithHTTPClient(myClient),
+// 		)
 func WithHTTPClient(client *http.Client) Option {
 	return func(b *BIGIoT) error {
 		b.httpClient = client
 
 		return nil
 	}
-}
-
-// Serializable is an interface for an instance that can serialize itself into
-// some form that the BIG IoT Marketplace will accept as input for either query
-// or mutatation.
-type Serializable interface {
-	Serialize() string
 }

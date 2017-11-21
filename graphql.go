@@ -18,3 +18,10 @@ package bigiot
 type Query struct {
 	Query string `json:"query"`
 }
+
+// Serializable is an interface for an instance that can serialize itself into
+// some form that the BIG IoT Marketplace will accept as input for either query
+// or mutatation.
+type Serializable interface {
+	Serialize() string
+}

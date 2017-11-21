@@ -54,7 +54,7 @@ func TestRegisterOffering(t *testing.T) {
 	err = provider.Authenticate()
 	assert.Nil(t, err)
 
-	offeringInput := &bigiot.OfferingInput{
+	offeringInput := &bigiot.AddOffering{
 		LocalID: "TestOffering",
 		Name:    "Test Offering",
 		OutputData: []bigiot.DataField{
@@ -92,6 +92,40 @@ func TestRegisterOffering(t *testing.T) {
 	assert.Equal(t, "Organization-Provider-TestOffering", offering.ID)
 	assert.True(t, offering.Activation.Status)
 	assert.Equal(t, expirationTime.UTC(), offering.Activation.ExpirationTime)
+}
+
+func TestDeleteOffering(t *testing.T) {
+	simular.Activate()
+	defer simular.DeactivateAndReset()
+
+	simular.RegisterStubRequests(
+		simular.NewStubRequest(
+			http.MethodGet,
+			"https://market.big-iot.org/accessToken?clientId=Provider&clientSecret=secret",
+			simular.NewStringResponder(200, "1234abcd"),
+		),
+		simular.NewStubRequest(
+			http.MethodPost,
+			"https://market.big-iot.org/graphql",
+			simular.NewStringResponder(200, `{"data": {"deleteOffering": {"id": "Organization-Provider-TestOffering"}}}`),
+			simular.WithBody(
+				bytes.NewBufferString(`{"query":"mutation deleteOffering { deleteOffering ( input: { id: \"Organization-Provider-TestOffering\" } ) { id } }"}`),
+			),
+		),
+	)
+
+	provider, err := bigiot.NewProvider("Provider", "secret")
+	assert.Nil(t, err)
+
+	err = provider.Authenticate()
+	assert.Nil(t, err)
+
+	deleteOffering := &bigiot.DeleteOffering{
+		ID: "Organization-Provider-TestOffering",
+	}
+
+	err = provider.DeleteOffering(context.Background(), deleteOffering)
+	assert.Nil(t, err)
 }
 
 //func TestOffering(t *testing.T) {

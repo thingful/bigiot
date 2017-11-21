@@ -29,7 +29,8 @@ type authTransport struct {
 }
 
 // RoundTrip is our implementation of RoundTripper, which does the job of adding
-// auth credentials if any are present
+// auth credentials if any are present. We also supply a user agent if the
+// caller hasn't explicitly set one when calling the library.
 func (t authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if t.bigiot.accessToken != "" {
 		var buf bytes.Buffer

@@ -15,11 +15,8 @@
 package bigiot
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
 )
 
 // Provider is our type for interacting with the marketplace from the
@@ -72,41 +69,14 @@ func NewProvider(id, secret string, options ...Option) (*Provider, error) {
 // 	}, nil
 // }
 
-func (p *Provider) RegisterOffering(ctx context.Context, offering *OfferingInput) (*Offering, error) {
+// RegisterOffering allows calles to register an offering on the marketplace.
+// When registering the caller will supply an activation lifetime for the
+// Offering as part of the input AddOffering instance. The function returns a
+// populated Offering instance or nil and an error.
+func (p *Provider) RegisterOffering(ctx context.Context, offering *AddOffering) (*Offering, error) {
 	offering.providerID = p.ID
 
-	q := &Query{
-		Query: offering.Serialize(),
-	}
-
-	b, err := json.Marshal(q)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest(http.MethodPost, p.graphqlURL, bytes.NewBuffer(b))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set(contentTypeHeader, applicationJSON)
-
-	resp, err := p.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func() {
-		if cerr := resp.Body.Close(); cerr != nil && err == nil {
-			err = cerr
-		}
-	}()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, ErrUnexpectedResponse
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := p.Query(ctx, offering)
 	if err != nil {
 		return nil, err
 	}
@@ -119,6 +89,19 @@ func (p *Provider) RegisterOffering(ctx context.Context, offering *OfferingInput
 	}
 
 	return &addOffering.Data.Offering, nil
+}
+
+// DeleteOffering attempts to delete or unregister an offering on the
+// marketplace. It is called with a context, and a DeleteOffering instance. This
+// instance is serialized and the query executed against the GraphQL server. The
+// function returns an error if anything goes wrong.
+func (p *Provider) DeleteOffering(ctx context.Context, offering *DeleteOffering) error {
+	_, err := p.Query(ctx, offering)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // addOfferingResponse is a unexported type used when parsing the response from
