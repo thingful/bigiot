@@ -28,7 +28,7 @@ type Provider struct {
 
 // NewProvider instantiates and returns a configured Provider instance. The
 // required parameters to the function are the provider ID and secret. If you
-// want to connect to a marketplace other than the offical marketplace (i.e.
+// want to connect to a marketplace other than the official marketplace (i.e.
 // connecting to a local instance for testing), you can configure this by means
 // of the variadic third parameter, which can be used for additional
 // configuration.
