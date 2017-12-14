@@ -38,12 +38,6 @@ type Clock interface {
 	Now() time.Time
 }
 
-// Clock is an interface used to make it possible to test time related code more
-// easily.
-type Clock interface {
-	Now() time.Time
-}
-
 // realClock is our implementation of the Clock interface that returns the real
 // time.
 type realClock struct{}
