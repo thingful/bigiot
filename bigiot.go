@@ -32,6 +32,10 @@ const (
 	// DefaultTimeout is the default timeout in seconds to set on on requests to
 	// the marketplace
 	DefaultTimeout = 10
+
+	// DefaultActivationDuration is the default duration a resource will be
+	// activated for. Currently this is set for 10 minutes.
+	DefaultActivationDuration = 10 * time.Minute
 )
 
 // base is our base BIGIoT client object. It contains the runtime state of our
