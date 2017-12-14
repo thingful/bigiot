@@ -45,7 +45,7 @@ your providerID and secret.
 
 Then in order to register an offering a client would first create a description of the offering.
 
-	addOfferingInput := &bigiot.AddOffering{
+	addOfferingInput := &bigiot.OfferingDescription{
 		LocalID: "ParkingOffering",
 		Name:    "Demo Parking Offering",
 		InputData: []bigiot.DataField{
@@ -83,8 +83,8 @@ Then in order to register an offering a client would first create a description 
 			PricingModel: bigiot.PerAccess,
 		},
 		Activation: bigiot.Activation{
-			Status:         true,
-			ExpirationTime: expirationTime,
+			Status:   true,
+			Duration: 15 * time.Minute,
 		},
 	}
 

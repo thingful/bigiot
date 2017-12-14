@@ -19,15 +19,29 @@ import (
 	"time"
 )
 
-// toEpochMs takes a time.Time and returns this time as a epoch milliseconds
+// ToEpochMs takes a time.Time and returns this time as a epoch milliseconds
 // formatted as a string.
-func toEpochMs(t time.Time) string {
+func ToEpochMs(t time.Time) string {
 	return strconv.FormatInt(t.UnixNano()*int64(time.Nanosecond)/int64(time.Millisecond), 10)
 }
 
-// fromEpochMs takes as input an int value (as returned from toEpochMs) and then
+// FromEpochMs takes as input an int value (as returned from ToEpochMs) and then
 // returns this as a time.Time in UTC.
-func fromEpochMs(v int64) time.Time {
+func FromEpochMs(v int64) time.Time {
 	nanosec := v * 1e6
 	return time.Unix(0, nanosec).UTC()
 }
+
+// Clock is an interface used to make it possible to test time related code more
+// easily.
+type Clock interface {
+	Now() time.Time
+}
+
+// realClock is our implementation of the Clock interface that returns the real
+// time.
+type realClock struct{}
+
+// Now is our implementation of the Clock function interface that returns the
+// current time
+func (r realClock) Now() time.Time { return time.Now() }

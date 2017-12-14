@@ -73,7 +73,7 @@ func NewProvider(id, secret string, options ...Option) (*Provider, error) {
 // When registering the caller will supply an activation lifetime for the
 // Offering as part of the input AddOffering instance. The function returns a
 // populated Offering instance or nil and an error.
-func (p *Provider) RegisterOffering(ctx context.Context, offering *AddOffering) (*Offering, error) {
+func (p *Provider) RegisterOffering(ctx context.Context, offering *OfferingDescription) (*Offering, error) {
 	offering.providerID = p.id
 
 	body, err := p.query(ctx, offering)
