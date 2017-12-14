@@ -22,7 +22,8 @@ type query struct {
 
 // serializable is an interface for an instance that can serialize itself into
 // some form that the BIG IoT Marketplace will accept as input for either query
-// or mutatation.
+// or mutatation. It is a simple function that takes in a Clock instance, and
+// that returns a string containing the graphql serialization of the type.
 type serializable interface {
-	Serialize() string
+	Serialize(clock Clock) string
 }

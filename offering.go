@@ -44,7 +44,7 @@ type AddOffering struct {
 // implemented by manually building up the query using a bytes.Buffer as the
 // existing Go graphql libraries didn't seem able to communicate with the
 // marketplace.
-func (o *AddOffering) Serialize() string {
+func (o *OfferingDescription) Serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`mutation addOffering { addOffering ( input: { id: "`)
@@ -54,35 +54,35 @@ func (o *AddOffering) Serialize() string {
 	buf.WriteString(`", name: "`)
 	buf.WriteString(o.Name)
 	buf.WriteString(`", activation: `)
-	buf.WriteString(o.Activation.Serialize())
+	buf.WriteString(o.Activation.Serialize(clock))
 	buf.WriteString(`, rdfUri: "`)
 	buf.WriteString(o.RdfURI)
 	buf.WriteString(`", inputData: [`)
 	// serialized inputData goes here
 	for _, input := range o.InputData {
-		buf.WriteString(input.Serialize())
+		buf.WriteString(input.Serialize(clock))
 		buf.WriteString(" ")
 	}
 	buf.WriteString(`], outputData: [`)
 	// serialized outputData goes here
 	for _, output := range o.OutputData {
-		buf.WriteString(output.Serialize())
+		buf.WriteString(output.Serialize(clock))
 		buf.WriteString(" ")
 	}
 	buf.WriteString(`], endpoints: [`)
 	// serialized endpoints
 	for _, endpoint := range o.Endpoints {
-		buf.WriteString(endpoint.Serialize())
+		buf.WriteString(endpoint.Serialize(clock))
 		buf.WriteString(" ")
 	}
 	buf.WriteString(`], license: `)
 	buf.WriteString(o.License.String())
 	buf.WriteString(`, price: `)
 	// serialized price
-	buf.WriteString(o.Price.Serialize())
+	buf.WriteString(o.Price.Serialize(clock))
 	buf.WriteString(`, extent: `)
 	// serialized address
-	buf.WriteString(o.Extent.Serialize())
+	buf.WriteString(o.Extent.Serialize(clock))
 	buf.WriteString(` } ) `)
 
 	// desired returned output
@@ -100,7 +100,7 @@ type DataField struct {
 
 // Serialize is our implementation of Serializable for DataField. Serializes
 // into a form that the marketplace understands.
-func (d *DataField) Serialize() string {
+func (d *DataField) Serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{name: "`)
@@ -120,7 +120,7 @@ type Endpoint struct {
 }
 
 // Serialize is Endpoint's implementation of our Serializable interface
-func (e *Endpoint) Serialize() string {
+func (e *Endpoint) Serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{uri: "`)
@@ -142,7 +142,7 @@ type Address struct {
 
 // Serialize is our implementation of Serializable - to convert into BIG IoT
 // form.
-func (a *Address) Serialize() string {
+func (a *Address) Serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{city: "`)
@@ -159,11 +159,11 @@ type Price struct {
 }
 
 // Serialize is our implementation of Serializable for Price objects.
-func (p *Price) Serialize() string {
+func (p *Price) Serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{money: `)
-	buf.WriteString(p.Money.Serialize())
+	buf.WriteString(p.Money.Serialize(clock))
 	buf.WriteString(`, pricingModel: `)
 	buf.WriteString(p.PricingModel.String())
 	buf.WriteString(`}`)
@@ -180,7 +180,7 @@ type Money struct {
 }
 
 // Serialize is our implementation of Serializable for Money objects.
-func (m *Money) Serialize() string {
+func (m *Money) Serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{amount: `)
@@ -196,19 +196,32 @@ func (m *Money) Serialize() string {
 // flag, and an expiration time. If the flag is set to true and the expiration
 // time is in the future, then the offering is active; otherwise it is inactive.
 type Activation struct {
-	Status         bool      `json:"status"`
-	ExpirationTime time.Time `json:"-"`
+	Status         bool          `json:"status"`
+	ExpirationTime time.Time     `json:"-"`
+	Duration       time.Duration `json:"-"`
 }
 
 // Serialize converts our Activation into the structure required to send to the
 // marketplace
-func (a *Activation) Serialize() string {
-	var buf bytes.Buffer
+func (a *Activation) Serialize(clock Clock) string {
+	var (
+		buf            bytes.Buffer
+		expirationTime time.Time
+	)
 
 	buf.WriteString(`{status: `)
 	buf.WriteString(strconv.FormatBool(a.Status))
 	buf.WriteString(`, expirationTime: `)
-	buf.WriteString(toEpochMs(a.ExpirationTime))
+	if a.ExpirationTime.IsZero() {
+		if a.Duration == 0 {
+			expirationTime = clock.Now().Add(DefaultActivationDuration)
+		} else {
+			expirationTime = clock.Now().Add(a.Duration)
+		}
+	} else {
+		expirationTime = a.ExpirationTime
+	}
+	buf.WriteString(ToEpochMs(expirationTime))
 	buf.WriteString(`} `)
 
 	return buf.String()
@@ -230,7 +243,7 @@ func (a *Activation) UnmarshalJSON(b []byte) error {
 	}
 
 	a.Status = d.Status
-	a.ExpirationTime = fromEpochMs(d.ExpirationTime)
+	a.ExpirationTime = FromEpochMs(d.ExpirationTime)
 
 	return nil
 }
@@ -250,7 +263,7 @@ type DeleteOffering struct {
 }
 
 // Serialize is our implementation of Serializable for DeleteOffering objects.
-func (d *DeleteOffering) Serialize() string {
+func (d *DeleteOffering) Serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`mutation deleteOffering { deleteOffering ( input: { id: "`)

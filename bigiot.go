@@ -47,6 +47,7 @@ type base struct {
 	baseURL     *url.URL
 	accessToken string
 	graphqlURL  string
+	clock       Clock
 }
 
 func newBase(id, secret string, options ...Option) (*base, error) {
@@ -65,6 +66,7 @@ func newBase(id, secret string, options ...Option) (*base, error) {
 		userAgent:  fmt.Sprintf("bigiot/%s (https://github.com/thingful/bigiot)", Version),
 		baseURL:    u,
 		httpClient: httpClient,
+		clock:      &realClock{},
 	}
 
 	var err error
@@ -153,7 +155,7 @@ func (b *base) Authenticate() (err error) {
 // returned data.
 func (b *base) query(ctx context.Context, s serializable) (_ []byte, err error) {
 	q := &query{
-		Query: s.Serialize(),
+		Query: s.Serialize(b.clock),
 	}
 
 	bt, err := json.Marshal(q)
@@ -244,6 +246,16 @@ func WithUserAgent(userAgent string) Option {
 func WithHTTPClient(client *http.Client) Option {
 	return func(b *base) error {
 		b.httpClient = client
+
+		return nil
+	}
+}
+
+// WithClock allows a caller to specify a custom Clock implementaton. Typically
+// this will only be used within tests to mock out calls to time.Now().
+func WithClock(clock Clock) Option {
+	return func(b *base) error {
+		b.clock = clock
 
 		return nil
 	}
