@@ -21,11 +21,11 @@ import (
 	"time"
 )
 
-// AddOffering is the type used to register an offering with the marketplace.
-// It contains information about the offerings inputs and outputs, its
-// endpoints, license and price. In addition this is how offerings specify that
-// they are active.
-type AddOffering struct {
+// OfferingDescription is the type used to register an offering with the
+// marketplace. It contains information about the offerings inputs and outputs,
+// its endpoints, license and price. In addition this is how offerings specify
+// that they are active.
+type OfferingDescription struct {
 	providerID string
 	LocalID    string
 	Name       string
