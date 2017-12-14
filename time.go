@@ -19,15 +19,15 @@ import (
 	"time"
 )
 
-// toEpochMs takes a time.Time and returns this time as a epoch milliseconds
+// ToEpochMs takes a time.Time and returns this time as a epoch milliseconds
 // formatted as a string.
-func toEpochMs(t time.Time) string {
+func ToEpochMs(t time.Time) string {
 	return strconv.FormatInt(t.UnixNano()*int64(time.Nanosecond)/int64(time.Millisecond), 10)
 }
 
-// fromEpochMs takes as input an int value (as returned from toEpochMs) and then
+// FromEpochMs takes as input an int value (as returned from ToEpochMs) and then
 // returns this as a time.Time in UTC.
-func fromEpochMs(v int64) time.Time {
+func FromEpochMs(v int64) time.Time {
 	nanosec := v * 1e6
 	return time.Unix(0, nanosec).UTC()
 }

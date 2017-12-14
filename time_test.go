@@ -35,11 +35,11 @@ func TestEpochMs(t *testing.T) {
 
 	for _, testcase := range testcases {
 		t.Run(testcase.name, func(t *testing.T) {
-			got := toEpochMs(testcase.input)
+			got := ToEpochMs(testcase.input)
 			assert.Equal(t, testcase.expected, got)
 			val, err := strconv.ParseInt(got, 10, 64)
 			assert.Nil(t, err)
-			back := fromEpochMs(val)
+			back := FromEpochMs(val)
 			assert.Equal(t, testcase.expectedBack.UTC(), back)
 		})
 	}
