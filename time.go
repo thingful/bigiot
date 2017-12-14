@@ -31,3 +31,23 @@ func fromEpochMs(v int64) time.Time {
 	nanosec := v * 1e6
 	return time.Unix(0, nanosec).UTC()
 }
+
+// Clock is an interface used to make it possible to test time related code more
+// easily.
+type Clock interface {
+	Now() time.Time
+}
+
+// Clock is an interface used to make it possible to test time related code more
+// easily.
+type Clock interface {
+	Now() time.Time
+}
+
+// realClock is our implementation of the Clock interface that returns the real
+// time.
+type realClock struct{}
+
+// Now is our implementation of the Clock function interface that returns the
+// current time
+func (r realClock) Now() time.Time { return time.Now() }
