@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // OfferingDescription is the type used to register an offering with the
@@ -239,7 +241,7 @@ func (a *Activation) UnmarshalJSON(b []byte) error {
 
 	err := json.Unmarshal(b, &d)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error unmarshalling activation type")
 	}
 
 	a.Status = d.Status
