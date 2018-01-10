@@ -16,8 +16,10 @@ package bigiot
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 
+	"github.com/pkg/errors"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
@@ -80,14 +82,14 @@ func (p *Provider) RegisterOffering(ctx context.Context, offering *OfferingDescr
 
 	body, err := p.query(ctx, offering)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error registering offering")
 	}
 
 	addOffering := addOfferingResponse{}
 
 	err = json.Unmarshal(body, &addOffering)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error unmarshalling register offering json")
 	}
 
 	return &addOffering.Data.Offering, nil
@@ -100,7 +102,7 @@ func (p *Provider) RegisterOffering(ctx context.Context, offering *OfferingDescr
 func (p *Provider) DeleteOffering(ctx context.Context, offering *DeleteOffering) error {
 	_, err := p.query(ctx, offering)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error deleting offering")
 	}
 
 	return nil
@@ -111,11 +113,35 @@ func (p *Provider) DeleteOffering(ctx context.Context, offering *DeleteOffering)
 // from an offering. It takes as input the encoded token string, extracts its
 // component parts and verifies the signature using the secret of the provider.
 func (p *Provider) ValidateToken(tokenStr string) error {
-	_, err := jwt.ParseSigned(tokenStr)
+	key, err := base64.StdEncoding.DecodeString(p.secret)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "decoding secret failed")
 	}
 
+	token, err := jwt.ParseSigned(tokenStr)
+	if err != nil {
+		return errors.Wrap(err, "error parsing token string")
+	}
+
+	cl := jwt.Claims{}
+	err = token.Claims(key, &cl)
+	if err != nil {
+		return errors.Wrap(err, "error extracting claims from token")
+	}
+
+	// the only claim we validate for now is that the token has neither expired nor
+	// is not valid yet. Note the jwt library allows leeway of one minute before
+	// marking a token as invalid, I presume to allow for clock inconsistencies,
+	// i.e. if the token expires 17:05, then Validate will still allow it up to
+	// 17:06. The same applies before the token is technically valid.
+	err = cl.Validate(jwt.Expected{
+		Time: p.clock.Now(),
+	})
+	if err != nil {
+		return errors.Wrap(err, "error validating claims")
+	}
+
+	// all good
 	return nil
 }
 
