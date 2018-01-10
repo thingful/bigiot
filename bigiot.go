@@ -23,6 +23,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -79,7 +81,7 @@ func newBase(id, secret string, options ...Option) (*base, error) {
 	for _, opt := range options {
 		err = opt(b)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "initializing base failed")
 		}
 	}
 
@@ -122,14 +124,14 @@ func (b *base) Authenticate() (err error) {
 
 	req, err := http.NewRequest(http.MethodGet, authURL.String(), nil)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error creating authentication request")
 	}
 
 	req.Header.Set(acceptHeader, textPlain)
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error making authentication request")
 	}
 
 	defer func() {
@@ -144,7 +146,7 @@ func (b *base) Authenticate() (err error) {
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error reading authentication response")
 	}
 
 	b.accessToken = string(body)
@@ -164,12 +166,12 @@ func (b *base) query(ctx context.Context, s serializable) (_ []byte, err error) 
 
 	bt, err := json.Marshal(q)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error marshalling request")
 	}
 
 	req, err := http.NewRequest(http.MethodPost, b.graphqlURL, bytes.NewBuffer(bt))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error creating request")
 	}
 
 	req.Header.Set(contentTypeHeader, applicationJSON)
@@ -178,7 +180,7 @@ func (b *base) query(ctx context.Context, s serializable) (_ []byte, err error) 
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error making request to marketplace")
 	}
 
 	defer func() {
@@ -212,7 +214,7 @@ func WithMarketplace(marketplaceURL string) Option {
 	return func(b *base) error {
 		u, err := url.Parse(marketplaceURL)
 		if err != nil {
-			return err
+			return errors.Wrap(err, "error parsing marketplace url")
 		}
 
 		b.baseURL = u
