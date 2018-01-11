@@ -17,6 +17,8 @@ package bigiot
 import (
 	"bytes"
 	"net/http"
+
+	"github.com/pkg/errors"
 )
 
 // authTransport is an internal implementation of the RoundTripper interface that
@@ -46,7 +48,7 @@ func (t authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	res, err := t.proxied.RoundTrip(req)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error making proxied round trip")
 	}
 
 	return res, err

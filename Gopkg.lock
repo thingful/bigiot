@@ -26,6 +26,12 @@
   revision = "e22571dfbd216d3ca34207d9a1d877f38d8f051c"
 
 [[projects]]
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -45,6 +51,15 @@
 
 [[projects]]
   branch = "master"
+  name = "golang.org/x/crypto"
+  packages = [
+    "ed25519",
+    "ed25519/internal/edwards25519"
+  ]
+  revision = "94eea52f7b742c7cbe0b03b22f0c4c8631ece122"
+
+[[projects]]
+  branch = "master"
   name = "golang.org/x/net"
   packages = ["idna"]
   revision = "01c190206fbdffa42f334f4b2bf2220f50e64920"
@@ -52,12 +67,39 @@
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = ["collate","collate/build","internal/colltab","internal/gen","internal/tag","internal/triegen","internal/ucd","language","secure/bidirule","transform","unicode/bidi","unicode/cldr","unicode/norm","unicode/rangetable","width"]
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable",
+    "width"
+  ]
   revision = "88f656faf3f37f690df1a32515b479415e1a6769"
+
+[[projects]]
+  name = "gopkg.in/square/go-jose.v2"
+  packages = [
+    ".",
+    "cipher",
+    "json",
+    "jwt"
+  ]
+  revision = "f8f38de21b4dcd69d0413faf231983f5fd6634b1"
+  version = "v2.1.3"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0d22847324d702e8cde1505337a21a073ac20ff528b702469d5976b5cddb8c7a"
+  inputs-digest = "b0539040e3c1161e5991ded4a27a65035b53ab545b972a7d40d094f5ad6f5982"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -19,6 +19,8 @@ import (
 	"encoding/json"
 	"strconv"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // OfferingDescription is the type used to register an offering with the
@@ -239,7 +241,7 @@ func (a *Activation) UnmarshalJSON(b []byte) error {
 
 	err := json.Unmarshal(b, &d)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "error unmarshalling activation type")
 	}
 
 	a.Status = d.Status
@@ -259,7 +261,7 @@ type Offering struct {
 
 // DeleteOffering is an input type used to delete or unregister an offering.
 type DeleteOffering struct {
-	ID string `json:"id"`
+	ID string
 }
 
 // Serialize is our implementation of Serializable for DeleteOffering objects.
@@ -269,6 +271,37 @@ func (d *DeleteOffering) Serialize(clock Clock) string {
 	buf.WriteString(`mutation deleteOffering { deleteOffering ( input: { id: "`)
 	buf.WriteString(d.ID)
 	buf.WriteString(`" } ) { id } }`)
+
+	return buf.String()
+}
+
+// ActivateOffering is an input type used to reactivate an existing offering.
+type ActivateOffering struct {
+	ID             string
+	ExpirationTime time.Time
+	Duration       time.Duration
+}
+
+func (a *ActivateOffering) Serialize(clock Clock) string {
+	var (
+		buf            bytes.Buffer
+		expirationTime time.Time
+	)
+
+	buf.WriteString(`mutation activateOffering { activateOffering ( input: { id: "`)
+	buf.WriteString(a.ID)
+	buf.WriteString(`", expirationTime: `)
+	if a.ExpirationTime.IsZero() {
+		if a.Duration == 0 {
+			expirationTime = clock.Now().Add(DefaultActivationDuration)
+		} else {
+			expirationTime = clock.Now().Add(a.Duration)
+		}
+	} else {
+		expirationTime = a.ExpirationTime
+	}
+	buf.WriteString(ToEpochMs(expirationTime))
+	buf.WriteString(` } ) { id activation { status expirationTime } } }`)
 
 	return buf.String()
 }
