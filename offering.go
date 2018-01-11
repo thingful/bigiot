@@ -288,8 +288,6 @@ func (a *ActivateOffering) Serialize(clock Clock) string {
 		expirationTime time.Time
 	)
 
-	// { "query" : "mutation activateOffering { activateOffering ( input: { id: \"Thingful_SM-TestProvider-RandomNumberOffering2\"
-	//, expirationTime: 1513401385127 } ) { id activation { status expirationTime } } }" }
 	buf.WriteString(`mutation activateOffering { activateOffering ( input: { id: "`)
 	buf.WriteString(a.ID)
 	buf.WriteString(`", expirationTime: `)
