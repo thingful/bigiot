@@ -45,34 +45,6 @@ func NewProvider(id, secret string, options ...Option) (*Provider, error) {
 	return &Provider{base: b}, nil
 }
 
-// Offering returns details of an offering on being given the ID of that
-// offering. It makes a call to the marketplace API and returns the offering
-// details.
-// func (p *Provider) Offering(id string) (*Offering, error) {
-// 	var query struct {
-// 		Offering struct {
-// 			ID   graphql.String
-// 			Name graphql.String
-// 		} `graphql:"offering(id: $id)"`
-// 	}
-//
-// 	variables := map[string]interface{}{
-// 		"id": graphql.String(id),
-// 	}
-//
-// 	err := p.graphqlClient.Query(context.Background(), &query, variables)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-//
-// 	return &Offering{
-// 		ID: string(query.Offering.ID),
-// 		OfferingDescription: OfferingDescription{
-// 			Name: string(query.Offering.Name),
-// 		},
-// 	}, nil
-// }
-
 // RegisterOffering allows calles to register an offering on the marketplace.
 // When registering the caller will supply an activation lifetime for the
 // Offering as part of the input AddOffering instance. The function returns a
