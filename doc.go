@@ -21,10 +21,11 @@ from supporting the same range of functionality as the Java library.
 
 Implemented functionality:
   * register an offering in the marketplace
-  * delete or unregister an offering from the marketplace
+	* delete or unregister an offering from the marketplace
+	* reactivating offerings from the marketplace
+	* validating tokens presented by offering subscribers
 
 Planned functionality:
-  * validating tokens presented by offering subscribers
   * discovering an offering in the marketplace
   * subscribing to an offering
 
@@ -43,7 +44,8 @@ your providerID and secret.
 		panic(err) // handle error properly
 	}
 
-Then in order to register an offering a client would first create a description of the offering.
+Then in order to register an offering a client would first create a
+description of the offering.
 
 	addOfferingInput := &bigiot.OfferingDescription{
 		LocalID: "ParkingOffering",
@@ -102,6 +104,30 @@ To delete an offering we need to invoke the DeleteOffering method:
 	}
 
 	err = provider.DeleteOffering(context.Background(), deleteOfferingInput)
+	if err != nil {
+		panic(err) // handle error properly
+	}
+
+To re-activate an offering (a provider will want to do this as they are
+expected to continously re-activate to show an offering is still alive) you
+can use the following method on the Provider:
+
+	activateOfferingInput := &bigiot.ActivateOffering{
+		ID: offering.ID,
+		Duration: 15 * time.Minute,
+	}
+
+	err := provider.ActivateOffering(context.Background(), activateOfferingInput)
+	if err != nil {
+		panic(err) // handle error properly
+	}
+
+To validate incoming tokens presented by a consumer, we expose a
+ValidateToken method. This takes as input a token string encoded via the
+compact JWT serialization form, and returns either the ID of the offering
+being requested, or an error should the incoming token be invalid.
+
+	offeringID, err := provider.ValidateToken(tokenStr)
 	if err != nil {
 		panic(err) // handle error properly
 	}
