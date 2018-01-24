@@ -99,21 +99,23 @@ func (p *Provider) ActivateOffering(ctx context.Context, activation *ActivateOff
 // the marketplace and given to the client before it is allowed to access data
 // from an offering. It takes as input the encoded token string, extracts its
 // component parts and verifies the signature using the secret of the provider.
-func (p *Provider) ValidateToken(tokenStr string) error {
+// It returns the ID of the offering the token is for, or an empty string and an
+// error if unable to validate the token.
+func (p *Provider) ValidateToken(tokenStr string) (string, error) {
 	key, err := base64.StdEncoding.DecodeString(p.secret)
 	if err != nil {
-		return errors.Wrap(err, "decoding secret failed")
+		return "", errors.Wrap(err, "decoding secret failed")
 	}
 
 	token, err := jwt.ParseSigned(tokenStr)
 	if err != nil {
-		return errors.Wrap(err, "error parsing token string")
+		return "", errors.Wrap(err, "error parsing token string")
 	}
 
-	cl := jwt.Claims{}
+	cl := claims{}
 	err = token.Claims(key, &cl)
 	if err != nil {
-		return errors.Wrap(err, "error extracting claims from token")
+		return "", errors.Wrap(err, "error extracting claims from token")
 	}
 
 	// the only claim we validate for now is that the token has neither expired nor
@@ -125,11 +127,11 @@ func (p *Provider) ValidateToken(tokenStr string) error {
 		Time: p.clock.Now(),
 	})
 	if err != nil {
-		return errors.Wrap(err, "error validating claims")
+		return "", errors.Wrap(err, "error validating claims")
 	}
 
 	// all good
-	return nil
+	return cl.SubscribableID, nil
 }
 
 // addOfferingResponse is a unexported type used when parsing the response from
@@ -146,4 +148,13 @@ type activateOfferingResponse struct {
 	Data struct {
 		Offering Offering `json:"activateOffering"`
 	} `json:"data"`
+}
+
+// claims embeds the Claims object provided by the jwt library, but adds some
+// extra fields used by BIG IoT to identify the specific offering being
+// requested.
+type claims struct {
+	jwt.Claims
+	SubscribableID string `json:"subscribableId"`
+	SubscriberID   string `json:"subscriberId"`
 }

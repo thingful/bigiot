@@ -159,9 +159,11 @@ func TestAuthenticateCustomTransport(t *testing.T) {
 }
 
 func TestValidateTokenTimes(t *testing.T) {
+	offeringID := "Provider-Offering"
 	now := time.Date(2018, 1, 1, 9, 4, 0, 0, time.UTC)
 
-	tokenStr := `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIn0.KQAhL8d3ynvX3YmGIrScq11p-q_Y61aQybOS9lo5H7c`
+	// encoded token string for the above date, that expires after 1 minute
+	tokenStr := `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIiwic3Vic2NyaWJhYmxlSWQiOiJQcm92aWRlci1PZmZlcmluZyIsInN1YnNjcmliZXJJZCI6IkNvbnN1bWVyLVF1ZXJ5In0.US13MsSFVLvl7NMndSSKERhIz5d6K2hXH4w06_ZVkZw`
 
 	times := []struct {
 		label string
@@ -187,9 +189,11 @@ func TestValidateTokenTimes(t *testing.T) {
 			assert.Nil(t, err)
 
 			if tm.valid {
-				assert.Nil(t, p.ValidateToken(tokenStr))
+				gotID, err := p.ValidateToken(tokenStr)
+				assert.Nil(t, err)
+				assert.Equal(t, offeringID, gotID)
 			} else {
-				err = p.ValidateToken(tokenStr)
+				_, err = p.ValidateToken(tokenStr)
 				fmt.Println("ERROR", err)
 				assert.NotNil(t, err)
 			}
@@ -198,6 +202,7 @@ func TestValidateTokenTimes(t *testing.T) {
 }
 
 func TestValidateTokenData(t *testing.T) {
+	offeringID := "Provider-Offering"
 	now := time.Date(2018, 1, 1, 9, 4, 0, 0, time.UTC)
 	clock := mockClock{t: now}
 
@@ -210,31 +215,31 @@ func TestValidateTokenData(t *testing.T) {
 		{
 			"valid",
 			"CF72ABfRTqy1FQS1zBaevw==",
-			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIn0.KQAhL8d3ynvX3YmGIrScq11p-q_Y61aQybOS9lo5H7c`,
+			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIiwic3Vic2NyaWJhYmxlSWQiOiJQcm92aWRlci1PZmZlcmluZyIsInN1YnNjcmliZXJJZCI6IkNvbnN1bWVyLVF1ZXJ5In0.US13MsSFVLvl7NMndSSKERhIz5d6K2hXH4w06_ZVkZw`,
 			true,
 		},
 		{
 			"invalid secret",
 			"CF72ABfRTqy1FOS1zBaevw==",
-			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIn0.KQAhL8d3ynvX3YmGIrScq11p-q_Y61aQybOS9lo5H7c`,
+			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIiwic3Vic2NyaWJhYmxlSWQiOiJQcm92aWRlci1PZmZlcmluZyIsInN1YnNjcmliZXJJZCI6IkNvbnN1bWVyLVF1ZXJ5In0.US13MsSFVLvl7NMndSSKERhIz5d6K2hXH4w06_ZVkZw`,
 			false,
 		},
 		{
 			"invalid character in token",
 			"CF72ABfRTqy1FQS1zBaevw==",
-			`eyJhbGciOiJIUZI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIn0.KQAhL8d3ynvX3YmGIrScq11p-q_Y61aQybOS9lo5H7c`,
+			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIiwic3Vic2NyaWJhYmxlSWQiOiJQcm92aWRlci1PZmZlcmluZyIsInN1YnNjcmliZXJJZCI6IkNvbnN1bWVyLVF1ZXJ5In0.US13MsSFVLvl7NMndSSKERhIz5d6K2hXH4w06_ZVkZw`,
 			false,
 		},
 		{
 			"missing token part",
 			"CF72ABfRTqy1FQS1zBaevw==",
-			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIn0`,
+			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIiwic3Vic2NyaWJhYmxlSWQiOiJQcm92aWRlci1PZmZlcmluZyIsInN1YnNjcmliZXJJZCI6IkNvbnN1bWVyLVF1ZXJ5In0`,
 			false,
 		},
 		{
 			"non base64 key",
 			"hello",
-			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIn0.KQAhL8d3ynvX3YmGIrScq11p-q_Y61aQybOS9lo5H7c`,
+			`eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MTQ3OTc1MDAsIm5iZiI6MTUxNDc5NzQ0MCwic3ViIjoiQ29uc3VtZXItUXVlcnk9PVByb3ZpZGVyLU9mZmVyaW5nIiwic3Vic2NyaWJhYmxlSWQiOiJQcm92aWRlci1PZmZlcmluZyIsInN1YnNjcmliZXJJZCI6IkNvbnN1bWVyLVF1ZXJ5In0.US13MsSFVLvl7NMndSSKERhIz5d6K2hXH4w06_ZVkZw`,
 			false,
 		},
 	}
@@ -248,9 +253,12 @@ func TestValidateTokenData(t *testing.T) {
 			assert.Nil(t, err)
 
 			if testcase.valid {
-				assert.Nil(t, p.ValidateToken(testcase.tokenStr))
+				gotID, err := p.ValidateToken(testcase.tokenStr)
+				assert.Nil(t, err)
+				assert.Equal(t, offeringID, gotID)
 			} else {
-				assert.NotNil(t, p.ValidateToken(testcase.tokenStr))
+				_, err := p.ValidateToken(testcase.tokenStr)
+				assert.NotNil(t, err)
 			}
 		})
 	}
