@@ -1,3 +1,5 @@
+package mocks
+
 // Copyright 2017 Thingful Ltd.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,18 +14,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package bigiot
+import "time"
 
-// query is a type used when composing GraphQL queries. We use it when
-// marshalling our graphql queries before sending to the marketplace.
-type query struct {
-	Query string `json:"query"`
+// Clock is an implementation of the Clock interface for use in tests.
+// Returns a canned time for "now".
+type Clock struct {
+	T time.Time
 }
 
-// serializable is an interface for an instance that can serialize itself into
-// some form that the BIG IoT Marketplace will accept as input for either query
-// or mutatation. It is a simple function that takes in a Clock instance, and
-// that returns a string containing the graphql serialization of the type.
-type serializable interface {
-	serialize(clock Clock) string
+// Now is our implementation of the Clock Now() function that in the real case
+// returns the current time, but here we just return the canned time value set
+// on the struct.
+func (c Clock) Now() time.Time {
+	return c.T
 }
