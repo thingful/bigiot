@@ -161,7 +161,7 @@ func (b *base) Authenticate() (err error) {
 // returned data.
 func (b *base) query(ctx context.Context, s serializable) (_ []byte, err error) {
 	q := &query{
-		Query: s.Serialize(b.clock),
+		Query: s.serialize(b.clock),
 	}
 
 	bt, err := json.Marshal(q)

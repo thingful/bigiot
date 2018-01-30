@@ -41,12 +41,12 @@ type OfferingDescription struct {
 	Activation Activation
 }
 
-// Serialize attempts to serialize it into the string form that the marketplace
+// serialize attempts to serialize it into the string form that the marketplace
 // accepts as input to register an offering in the marketplace. Currently this
 // implemented by manually building up the query using a bytes.Buffer as the
 // existing Go graphql libraries didn't seem able to communicate with the
 // marketplace.
-func (o *OfferingDescription) Serialize(clock Clock) string {
+func (o *OfferingDescription) serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`mutation addOffering { addOffering ( input: { id: "`)
@@ -56,35 +56,35 @@ func (o *OfferingDescription) Serialize(clock Clock) string {
 	buf.WriteString(`", name: "`)
 	buf.WriteString(o.Name)
 	buf.WriteString(`", activation: `)
-	buf.WriteString(o.Activation.Serialize(clock))
+	buf.WriteString(o.Activation.serialize(clock))
 	buf.WriteString(`, rdfUri: "`)
 	buf.WriteString(o.RdfURI)
 	buf.WriteString(`", inputData: [`)
 	// serialized inputData goes here
 	for _, input := range o.InputData {
-		buf.WriteString(input.Serialize(clock))
+		buf.WriteString(input.serialize(clock))
 		buf.WriteString(" ")
 	}
 	buf.WriteString(`], outputData: [`)
 	// serialized outputData goes here
 	for _, output := range o.OutputData {
-		buf.WriteString(output.Serialize(clock))
+		buf.WriteString(output.serialize(clock))
 		buf.WriteString(" ")
 	}
 	buf.WriteString(`], endpoints: [`)
 	// serialized endpoints
 	for _, endpoint := range o.Endpoints {
-		buf.WriteString(endpoint.Serialize(clock))
+		buf.WriteString(endpoint.serialize(clock))
 		buf.WriteString(" ")
 	}
 	buf.WriteString(`], license: `)
 	buf.WriteString(o.License.String())
 	buf.WriteString(`, price: `)
 	// serialized price
-	buf.WriteString(o.Price.Serialize(clock))
+	buf.WriteString(o.Price.serialize(clock))
 	buf.WriteString(`, extent: `)
 	// serialized address
-	buf.WriteString(o.Extent.Serialize(clock))
+	buf.WriteString(o.Extent.serialize(clock))
 	buf.WriteString(` } ) `)
 
 	// desired returned output
@@ -100,9 +100,9 @@ type DataField struct {
 	RdfURI string
 }
 
-// Serialize is our implementation of Serializable for DataField. Serializes
+// serialize is our implementation of Serializable for DataField. Serializes
 // into a form that the marketplace understands.
-func (d *DataField) Serialize(clock Clock) string {
+func (d *DataField) serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{name: "`)
@@ -121,8 +121,8 @@ type Endpoint struct {
 	AccessInterfaceType AccessInterfaceType
 }
 
-// Serialize is Endpoint's implementation of our Serializable interface
-func (e *Endpoint) Serialize(clock Clock) string {
+// serialize is Endpoint's implementation of our Serializable interface
+func (e *Endpoint) serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{uri: "`)
@@ -142,9 +142,9 @@ type Address struct {
 	City string
 }
 
-// Serialize is our implementation of Serializable - to convert into BIG IoT
+// serialize is our implementation of Serializable - to convert into BIG IoT
 // form.
-func (a *Address) Serialize(clock Clock) string {
+func (a *Address) serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{city: "`)
@@ -160,12 +160,12 @@ type Price struct {
 	Money        Money
 }
 
-// Serialize is our implementation of Serializable for Price objects.
-func (p *Price) Serialize(clock Clock) string {
+// serialize is our implementation of Serializable for Price objects.
+func (p *Price) serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{money: `)
-	buf.WriteString(p.Money.Serialize(clock))
+	buf.WriteString(p.Money.serialize(clock))
 	buf.WriteString(`, pricingModel: `)
 	buf.WriteString(p.PricingModel.String())
 	buf.WriteString(`}`)
@@ -181,8 +181,8 @@ type Money struct {
 	Currency Currency
 }
 
-// Serialize is our implementation of Serializable for Money objects.
-func (m *Money) Serialize(clock Clock) string {
+// serialize is our implementation of Serializable for Money objects.
+func (m *Money) serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`{amount: `)
@@ -203,9 +203,9 @@ type Activation struct {
 	Duration       time.Duration `json:"-"`
 }
 
-// Serialize converts our Activation into the structure required to send to the
+// serialize converts our Activation into the structure required to send to the
 // marketplace
-func (a *Activation) Serialize(clock Clock) string {
+func (a *Activation) serialize(clock Clock) string {
 	var (
 		buf            bytes.Buffer
 		expirationTime time.Time
@@ -264,8 +264,8 @@ type DeleteOffering struct {
 	ID string
 }
 
-// Serialize is our implementation of Serializable for DeleteOffering objects.
-func (d *DeleteOffering) Serialize(clock Clock) string {
+// serialize is our implementation of Serializable for DeleteOffering objects.
+func (d *DeleteOffering) serialize(clock Clock) string {
 	var buf bytes.Buffer
 
 	buf.WriteString(`mutation deleteOffering { deleteOffering ( input: { id: "`)
@@ -282,7 +282,8 @@ type ActivateOffering struct {
 	Duration       time.Duration
 }
 
-func (a *ActivateOffering) Serialize(clock Clock) string {
+// serialize is our implementation of the serializable interface
+func (a *ActivateOffering) serialize(clock Clock) string {
 	var (
 		buf            bytes.Buffer
 		expirationTime time.Time
