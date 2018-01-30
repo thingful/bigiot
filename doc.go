@@ -20,6 +20,7 @@ practices. This is very much a work in progress, so currently is a long way
 from supporting the same range of functionality as the Java library.
 
 Implemented functionality:
+
   * register an offering in the marketplace
 	* delete or unregister an offering from the marketplace
 	* reactivating offerings from the marketplace
