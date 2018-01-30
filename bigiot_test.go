@@ -24,21 +24,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thingful/bigiot"
+	"github.com/thingful/bigiot/mocks"
 	"github.com/thingful/simular"
 )
-
-// mockClock is an implementation of the Clock interface for use in tests.
-// Returns a canned time for "now".
-type mockClock struct {
-	t time.Time
-}
-
-// Now is our implementation of the Clock Now() function that in the real case
-// returns the current time, but here we just return the canned time value set
-// on the struct.
-func (m mockClock) Now() time.Time {
-	return m.t
-}
 
 func TestRegisterOffering(t *testing.T) {
 	simular.Activate()
@@ -116,7 +104,7 @@ func TestRegisterOfferingWithDuration(t *testing.T) {
 	now := time.Unix(0, 0)
 	duration := 10 * time.Minute
 	expirationTime := now.Add(duration)
-	clock := mockClock{t: now}
+	clock := mocks.Clock{T: now}
 
 	offeringInput := &bigiot.OfferingDescription{
 		LocalID: "TestOffering",
@@ -318,7 +306,7 @@ func TestDeleteOfferingError(t *testing.T) {
 
 func TestActivatingOffering(t *testing.T) {
 	now := time.Now()
-	clock := mockClock{now}
+	clock := mocks.Clock{T: now}
 
 	simular.Activate()
 	defer simular.DeactivateAndReset()

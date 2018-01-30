@@ -8,6 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/thingful/bigiot"
+	"github.com/thingful/bigiot/mocks"
 	"github.com/thingful/simular"
 )
 
@@ -179,7 +180,7 @@ func TestValidateTokenTimes(t *testing.T) {
 
 	for _, tm := range times {
 		t.Run(tm.label, func(t *testing.T) {
-			clock := mockClock{t: tm.time}
+			clock := mocks.Clock{T: tm.time}
 
 			p, err := bigiot.NewProvider(
 				"id",
@@ -204,7 +205,7 @@ func TestValidateTokenTimes(t *testing.T) {
 func TestValidateTokenData(t *testing.T) {
 	offeringID := "Provider-Offering"
 	now := time.Date(2018, 1, 1, 9, 4, 0, 0, time.UTC)
-	clock := mockClock{t: now}
+	clock := mocks.Clock{T: now}
 
 	testcases := []struct {
 		label    string
