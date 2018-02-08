@@ -45,7 +45,7 @@ func TestRegisterOffering(t *testing.T) {
 			"https://market.big-iot.org/graphql",
 			simular.NewStringResponder(200, `{"data": {"addOffering": {"id": "Organization-Provider-TestOffering", "activation": { "status": true, "expirationTime": 1509983101577}}}}`),
 			simular.WithBody(
-				bytes.NewBufferString(`{"query":"mutation addOffering { addOffering ( input: { id: \"Provider\", localId: \"TestOffering\", name: \"Test Offering\", activation: {status: true, expirationTime: 1509983101577} , rdfUri: \"\", inputData: [], outputData: [{name: \"value\", rdfUri: \"schema:random\"} ], endpoints: [{uri: \"https://example.com/random\", endpointType: HTTP_GET, accessInterfaceType: BIGIOT_LIB} ], license: OPEN_DATA_LICENSE, price: {money: {amount: 0.001, currency: EUR}, pricingModel: PER_ACCESS}, extent: {city: \"Berlin\"} } ) { id name activation { status expirationTime } } }"}`),
+				bytes.NewBufferString(`{"query":"mutation addOffering { addOffering ( input: { id: \"Provider\", localId: \"TestOffering\", name: \"Test Offering\", activation: { status: true, expirationTime: 1509983101577 }, rdfUri: \"urn:proposed:RandomValues\", outputs: [{ name: \"value\", rdfUri: \"schema:random\" }], endpoints: [{ uri: \"https://example.com/random\", endpointType: HTTP_GET, accessInterfaceType: BIGIOT_LIB }], license: OPEN_DATA_LICENSE, price: { money: { amount: 0.001, currency: EUR }, pricingModel: PER_ACCESS }, spatialExtent: { city: \"Berlin\", boundary: { l1: { lng: -2.25, lat: 54.53 }, l2: { lng: -2.26, lat: 54.96 } } } } ) { id name activation { status expirationTime } } }"}`),
 			),
 		),
 	)
@@ -59,7 +59,8 @@ func TestRegisterOffering(t *testing.T) {
 	offeringInput := &bigiot.OfferingDescription{
 		LocalID: "TestOffering",
 		Name:    "Test Offering",
-		OutputData: []bigiot.DataField{
+		RdfURI:  "urn:proposed:RandomValues",
+		Outputs: []bigiot.DataField{
 			{
 				Name:   "value",
 				RdfURI: "schema:random",
@@ -80,10 +81,20 @@ func TestRegisterOffering(t *testing.T) {
 			},
 			PricingModel: bigiot.PerAccess,
 		},
-		Extent: bigiot.Address{
+		SpatialExtent: &bigiot.SpatialExtent{
 			City: "Berlin",
+			BoundingBox: &bigiot.BoundingBox{
+				Location1: bigiot.Location{
+					Lng: -2.25,
+					Lat: 54.53,
+				},
+				Location2: bigiot.Location{
+					Lng: -2.26,
+					Lat: 54.96,
+				},
+			},
 		},
-		Activation: bigiot.Activation{
+		Activation: &bigiot.Activation{
 			Status:         true,
 			Duration:       10 * time.Minute,
 			ExpirationTime: expirationTime,
@@ -109,7 +120,8 @@ func TestRegisterOfferingWithDuration(t *testing.T) {
 	offeringInput := &bigiot.OfferingDescription{
 		LocalID: "TestOffering",
 		Name:    "Test Offering",
-		OutputData: []bigiot.DataField{
+		RdfURI:  "urn:proposed:RandomValues",
+		Outputs: []bigiot.DataField{
 			{
 				Name:   "value",
 				RdfURI: "schema:random",
@@ -130,10 +142,10 @@ func TestRegisterOfferingWithDuration(t *testing.T) {
 			},
 			PricingModel: bigiot.PerAccess,
 		},
-		Extent: bigiot.Address{
+		SpatialExtent: &bigiot.SpatialExtent{
 			City: "Berlin",
 		},
-		Activation: bigiot.Activation{
+		Activation: &bigiot.Activation{
 			Status:   true,
 			Duration: duration,
 		},
@@ -151,7 +163,7 @@ func TestRegisterOfferingWithDuration(t *testing.T) {
 				"https://market.big-iot.org/graphql",
 				simular.NewStringResponder(200, `{"data": {"addOffering": {"id": "Organization-Provider-TestOffering", "activation": { "status": true, "expirationTime": 600000}}}}`),
 				simular.WithBody(
-					bytes.NewBufferString(`{"query":"mutation addOffering { addOffering ( input: { id: \"Provider\", localId: \"TestOffering\", name: \"Test Offering\", activation: {status: true, expirationTime: 600000} , rdfUri: \"\", inputData: [], outputData: [{name: \"value\", rdfUri: \"schema:random\"} ], endpoints: [{uri: \"https://example.com/random\", endpointType: HTTP_GET, accessInterfaceType: BIGIOT_LIB} ], license: OPEN_DATA_LICENSE, price: {money: {amount: 0.001, currency: EUR}, pricingModel: PER_ACCESS}, extent: {city: \"Berlin\"} } ) { id name activation { status expirationTime } } }"}`),
+					bytes.NewBufferString(`{"query":"mutation addOffering { addOffering ( input: { id: \"Provider\", localId: \"TestOffering\", name: \"Test Offering\", activation: { status: true, expirationTime: 600000 }, rdfUri: \"urn:proposed:RandomValues\", outputs: [{ name: \"value\", rdfUri: \"schema:random\" }], endpoints: [{ uri: \"https://example.com/random\", endpointType: HTTP_GET, accessInterfaceType: BIGIOT_LIB }], license: OPEN_DATA_LICENSE, price: { money: { amount: 0.001, currency: EUR }, pricingModel: PER_ACCESS }, spatialExtent: { city: \"Berlin\" } } ) { id name activation { status expirationTime } } }"}`),
 				),
 			),
 		)
