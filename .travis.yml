@@ -17,4 +17,4 @@ before_install:
 install:
     - dep ensure -v
 
-script: make test
+script: make integration
