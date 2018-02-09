@@ -51,7 +51,7 @@ func TestProviderIntegration(t *testing.T) {
 	offeringInput := &bigiot.OfferingDescription{
 		LocalID: "TestOffering",
 		Name:    "Test Offering",
-		OutputData: []bigiot.DataField{
+		Outputs: []bigiot.DataField{
 			{
 				Name:   "value",
 				RdfURI: "schema:random",
@@ -72,24 +72,24 @@ func TestProviderIntegration(t *testing.T) {
 			},
 			PricingModel: bigiot.PerAccess,
 		},
-		Extent: bigiot.Address{
+		SpatialExtent: &bigiot.SpatialExtent{
 			City: "Berlin",
 		},
-		Activation: bigiot.Activation{
+		Activation: &bigiot.Activation{
 			Status:         true,
 			Duration:       10 * time.Minute,
 			ExpirationTime: expirationTime,
 		},
 	}
 
-	_, err = provider.RegisterOffering(context.Background(), offeringInput)
+	offering, err := provider.RegisterOffering(context.Background(), offeringInput)
 	assert.Nil(t, err)
-	//assert.NotNil(t, offering.ID)
+	assert.NotNil(t, offering.ID)
 
-	//deleteOffering := &bigiot.DeleteOffering{
-	//	ID: offering.ID,
-	//}
+	deleteOffering := &bigiot.DeleteOffering{
+		ID: offering.ID,
+	}
 
-	//err = provider.DeleteOffering(context.Background(), deleteOffering)
-	//assert.Nil(t, err)
+	err = provider.DeleteOffering(context.Background(), deleteOffering)
+	assert.Nil(t, err)
 }
