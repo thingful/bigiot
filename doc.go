@@ -49,9 +49,10 @@ Then in order to register an offering a client would first create a
 description of the offering.
 
 	addOfferingInput := &bigiot.OfferingDescription{
-		LocalID: "ParkingOffering",
-		Name:    "Demo Parking Offering",
-		InputData: []bigiot.DataField{
+		LocalID:  "ParkingOffering",
+		Name:     "Demo Parking Offering",
+		Category: "urn:big-iot:ParkingSpaces"
+		Inputs: []bigiot.DataField{
 			{
 				Name:   "longitude",
 				RdfURI: "schema:longitude",
@@ -61,7 +62,7 @@ description of the offering.
 				RdfURI: "schema:latitude",
 			},
 		},
-		OutputData: []bigiot.DataField{
+		Outputs: []bigiot.DataField{
 			{
 				Name:   "geoCoordinates",
 				RdfURI: "schema:geoCoordinates",
@@ -75,8 +76,18 @@ description of the offering.
 			}
 		},
 		License: bigiot.OpenDataLicense,
-		Extent: bigiot.Address{
+		SpatialExtent: &bigiot.SpatialExtent{
 			City: "Berlin",
+			BoundingBox: &bigiot.BoundingBox{
+				Location1: bigiot.Location{
+					Lng: 2.33,
+					Lat: 54.5,
+				},
+				Location2: bigiot.Location{
+					Lng: 2.38,
+					Lat: 54.53,
+				},
+			},
 		},
 		Price: bigiot.Price{
 			Money: bigiot.Money{
@@ -85,7 +96,7 @@ description of the offering.
 			},
 			PricingModel: bigiot.PerAccess,
 		},
-		Activation: bigiot.Activation{
+		Activation: &bigiot.Activation{
 			Status:   true,
 			Duration: 15 * time.Minute,
 		},

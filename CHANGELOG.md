@@ -7,7 +7,8 @@ Notable changes will be documented in this file
 * Unexport Serializable interface.
 * Update to version 0.10.M1 compatibility
 * On OfferingDescription: InputData is now Inputs, OutputData is now Outputs,
-  RdfURI has been renamed to Category
+  RdfURI has been renamed to Category, Extent is now SpatialExtent, and this
+  now contains an optional BoundingBox.
 * Capture and return error responses from API (remove ErrUnexpectedResponse type)
 * Add integration tests to run against the live marketplace.
 
