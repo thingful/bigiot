@@ -2,7 +2,7 @@
 
 Notable changes will be documented in this file
 
-## Unreleased
+## v0.10.M1
 
 * Unexport Serializable interface.
 * Update to version 0.10.M1 compatibility
