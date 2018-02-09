@@ -184,9 +184,9 @@ func TestSerializeOfferingDescription(t *testing.T) {
 		{
 			label: "duration no bounding",
 			input: &OfferingDescription{
-				LocalID: "TestOffering",
-				Name:    "Test Offering",
-				RdfURI:  "urn:proposed:RandomValues",
+				LocalID:  "TestOffering",
+				Name:     "Test Offering",
+				Category: "urn:proposed:RandomValues",
 				Outputs: []DataField{
 					{
 						Name:   "value",
@@ -221,9 +221,9 @@ func TestSerializeOfferingDescription(t *testing.T) {
 		{
 			label: "duration no bounding",
 			input: &OfferingDescription{
-				LocalID: "TestOffering",
-				Name:    "Test Offering",
-				RdfURI:  "urn:proposed:RandomValues",
+				LocalID:  "TestOffering",
+				Name:     "Test Offering",
+				Category: "urn:proposed:RandomValues",
 				Inputs: []DataField{
 					{
 						Name:   "value",

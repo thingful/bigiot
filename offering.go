@@ -31,7 +31,7 @@ type OfferingDescription struct {
 	providerID    string
 	LocalID       string
 	Name          string
-	RdfURI        string
+	Category      string
 	Inputs        []DataField
 	Outputs       []DataField
 	Endpoints     []Endpoint
@@ -62,7 +62,7 @@ func (o *OfferingDescription) serialize(clock Clock) string {
 	}
 
 	buf.WriteString(`, rdfUri: "`)
-	buf.WriteString(o.RdfURI)
+	buf.WriteString(o.Category)
 	buf.WriteString(`"`)
 
 	if len(o.Inputs) > 0 {

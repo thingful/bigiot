@@ -57,9 +57,9 @@ func TestRegisterOffering(t *testing.T) {
 	assert.Nil(t, err)
 
 	offeringInput := &bigiot.OfferingDescription{
-		LocalID: "TestOffering",
-		Name:    "Test Offering",
-		RdfURI:  "urn:proposed:RandomValues",
+		LocalID:  "TestOffering",
+		Name:     "Test Offering",
+		Category: "urn:proposed:RandomValues",
 		Outputs: []bigiot.DataField{
 			{
 				Name:   "value",
@@ -118,9 +118,9 @@ func TestRegisterOfferingWithDuration(t *testing.T) {
 	clock := mocks.Clock{T: now}
 
 	offeringInput := &bigiot.OfferingDescription{
-		LocalID: "TestOffering",
-		Name:    "Test Offering",
-		RdfURI:  "urn:proposed:RandomValues",
+		LocalID:  "TestOffering",
+		Name:     "Test Offering",
+		Category: "urn:proposed:RandomValues",
 		Outputs: []bigiot.DataField{
 			{
 				Name:   "value",
