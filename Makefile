@@ -13,6 +13,10 @@ help: ## Show this help message
 test: ## Run all tests
 	go test -v ./...
 
+.PHONY: integration
+integration: ## Run integration tests against the live server
+	go test -tags=integration -v ./...
+
 .PHONY: version
 version: ## Update version string in version.go
 	# echo ${VERSION}

@@ -54,14 +54,14 @@ func (p *Provider) RegisterOffering(ctx context.Context, offering *OfferingDescr
 
 	body, err := p.query(ctx, offering)
 	if err != nil {
-		return nil, errors.Wrap(err, "error registering offering")
+		return nil, errors.Wrap(err, "Error registering offering")
 	}
 
 	response := addOfferingResponse{}
 
 	err = json.Unmarshal(body, &response)
 	if err != nil {
-		return nil, errors.Wrap(err, "error unmarshalling register offering json")
+		return nil, errors.Wrap(err, "Error unmarshalling register offering json")
 	}
 
 	return &response.Data.Offering, nil
@@ -74,7 +74,7 @@ func (p *Provider) RegisterOffering(ctx context.Context, offering *OfferingDescr
 func (p *Provider) DeleteOffering(ctx context.Context, offering *DeleteOffering) error {
 	_, err := p.query(ctx, offering)
 	if err != nil {
-		return errors.Wrap(err, "error deleting offering")
+		return errors.Wrap(err, "Error deleting offering")
 	}
 
 	return nil
