@@ -81,14 +81,13 @@ func TestAuthenticateUnexpectedResponse(t *testing.T) {
 		simular.NewStubRequest(
 			http.MethodGet,
 			"https://market.big-iot.org/accessToken?clientId=id&clientSecret=secret",
-			simular.NewStringResponder(403, "Forbidden"),
+			simular.NewStringResponder(403, "ClientDoesNotExist: id"),
 		),
 	)
 
 	p, _ := bigiot.NewProvider("id", "secret")
 	err := p.Authenticate()
-	assert.Equal(t, bigiot.ErrUnexpectedResponse, err)
-	assert.Equal(t, "Unexpected HTTP response code", err.Error())
+	assert.Equal(t, "ClientDoesNotExist: id", err.Error())
 }
 
 func TestAuthenticateCustomUserAgent(t *testing.T) {

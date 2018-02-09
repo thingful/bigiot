@@ -124,14 +124,14 @@ func (b *base) Authenticate() (err error) {
 
 	req, err := http.NewRequest(http.MethodGet, authURL.String(), nil)
 	if err != nil {
-		return errors.Wrap(err, "error creating authentication request")
+		return errors.Wrap(err, "Error creating authentication request")
 	}
 
 	req.Header.Set(acceptHeader, textPlain)
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
-		return errors.Wrap(err, "error making authentication request")
+		return errors.Wrap(err, "Error making authentication request")
 	}
 
 	defer func() {
@@ -140,13 +140,13 @@ func (b *base) Authenticate() (err error) {
 		}
 	}()
 
-	if resp.StatusCode != http.StatusOK {
-		return ErrUnexpectedResponse
-	}
-
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return errors.Wrap(err, "error reading authentication response")
+		return errors.Wrap(err, "Error reading authentication response")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New(string(body))
 	}
 
 	b.accessToken = string(body)
@@ -166,12 +166,12 @@ func (b *base) query(ctx context.Context, s serializable) (_ []byte, err error) 
 
 	bt, err := json.Marshal(q)
 	if err != nil {
-		return nil, errors.Wrap(err, "error marshalling request")
+		return nil, err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, b.graphqlURL, bytes.NewBuffer(bt))
 	if err != nil {
-		return nil, errors.Wrap(err, "error creating request")
+		return nil, err
 	}
 
 	req.Header.Set(contentTypeHeader, applicationJSON)
@@ -180,7 +180,7 @@ func (b *base) query(ctx context.Context, s serializable) (_ []byte, err error) 
 
 	resp, err := b.httpClient.Do(req)
 	if err != nil {
-		return nil, errors.Wrap(err, "error making request to marketplace")
+		return nil, err
 	}
 
 	defer func() {
@@ -189,11 +189,26 @@ func (b *base) query(ctx context.Context, s serializable) (_ []byte, err error) 
 		}
 	}()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, ErrUnexpectedResponse
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
 	}
 
-	return ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		errorResp := ErrorResponse{}
+		err = json.Unmarshal(body, &errorResp)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(errorResp.Errors) == 0 {
+			return nil, errors.New("Invalid error response")
+		}
+
+		return nil, errors.New(errorResp.Errors[0].Message)
+	}
+
+	return body, nil
 }
 
 // Option is a type alias for our functional configuration type. Callers can use
@@ -214,7 +229,7 @@ func WithMarketplace(marketplaceURL string) Option {
 	return func(b *base) error {
 		u, err := url.Parse(marketplaceURL)
 		if err != nil {
-			return errors.Wrap(err, "error parsing marketplace url")
+			return errors.Wrap(err, "Error parsing marketplace url")
 		}
 
 		b.baseURL = u
